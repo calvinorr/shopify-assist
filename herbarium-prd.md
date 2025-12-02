@@ -22,7 +22,7 @@ Herbarium Dyeworks (hand-dyed wool e-commerce store) struggles to drive customer
 - **Shopify store** (product inventory, sales data, color trending)
 - **Instagram** (analytics, scheduling, posting)
 - **Blog CMS** (cloud-hosted blog content with WYSIWYG editor)
-- **AI content generation** (Claude API for ideas, captions, blog scaffolding)
+- **AI content generation** (Gemini Flash API for ideas, captions, blog scaffolding)
 
 **Core focus**: Instagram weekly rhythm + monthly blog posts for SEO, powered by Shopify data intelligence.
 
@@ -184,7 +184,7 @@ Central hub showing real-time insights from Shopify + Instagram:
 - Shopify store credentials (API key, access token)
 - Instagram Business Account connection (OAuth)
 - Turso database connection
-- Claude API key (for AI generation)
+- Gemini API key (for AI generation)
 - Brand voice guidelines (app learns your tone)
 - Posting preferences (best times, frequency)
 
@@ -304,7 +304,7 @@ Central hub showing real-time insights from Shopify + Instagram:
 
 ### Phase 2: Instagram Intelligence (Weeks 5-8)
 
-#### 4.2.1 AI Idea Generation (Claude API)
+#### 4.2.1 AI Idea Generation (Gemini Flash API)
 - Weekly suggestion generation: Input recent products, best colors, Instagram analytics
 - Output: 3 Instagram post ideas with reasoning
 - Store suggestions in Turso
@@ -462,10 +462,11 @@ CREATE TABLE settings (
 - Endpoints: GET insights, GET media, POST media_publish
 - Rate Limit: 200 calls/hour
 
-### Claude API
+### Gemini API (Google AI)
 - Auth: API key
-- Base URL: `https://api.anthropic.com/v1/messages`
-- Endpoint: POST messages (content generation)
+- Base URL: `https://generativelanguage.googleapis.com/v1beta`
+- Model: `gemini-2.0-flash` (cost-effective, fast)
+- Endpoint: POST generateContent
 
 ### Turso Database
 - Auth: Database token
@@ -505,7 +506,7 @@ CREATE TABLE settings (
 Shopify integration, Instagram OAuth, Turso database, basic dashboard, simple blog editor
 
 ### Phase 2: Instagram Intelligence (Weeks 5-8)
-Claude API integration, AI suggestions, caption generation, Instagram posting, hashtag engine
+Gemini Flash API integration, AI suggestions, caption generation, Instagram posting, hashtag engine
 
 ### Phase 3: Blog Intelligence (Weeks 9-12)
 AI blog topics, post scaffolding, enhanced editor, SEO fields, product linker
@@ -536,7 +537,7 @@ Bug fixes, user feedback, performance optimization, documentation
 ### APIs
 - Shopify: GraphQL Admin API v2024-12
 - Instagram: Graph API v19.0+
-- Claude: Anthropic SDK or REST API
+- Gemini: Google AI SDK (@google/generative-ai)
 
 ### Deployment
 - Frontend: Vercel or Netlify
@@ -556,7 +557,7 @@ Bug fixes, user feedback, performance optimization, documentation
 |------|--------|-----------|
 | Instagram API rate limits | Post delays | Queue system; batch requests |
 | Shopify data sync delays | Outdated dashboard | Retry logic; manual "Sync Now" |
-| Claude API costs | Unexpected expenses | Monitor usage; spend limits |
+| Gemini API costs | Unexpected expenses | Monitor usage; Gemini Flash is cost-effective |
 | Brand voice inconsistency | Captions feel off | Fine-tune prompts over time |
 | Blog HTML formatting issues | Shopify breakage | Test exports; Markdown alternative |
 | Turso storage limits | Database full | Monitor usage; archival strategy |

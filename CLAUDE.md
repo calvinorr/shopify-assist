@@ -6,7 +6,7 @@ Content automation tool for Herbarium Dyeworks (hand-dyed wool e-commerce) conne
 - **Shopify** - Product inventory, sales data, color trending
 - **Instagram** - Analytics, scheduling, posting
 - **Blog CMS** - WYSIWYG editor with AI scaffolding
-- **Claude API** - Content generation (captions, blog posts, ideas)
+- **Gemini Flash API** - Content generation (captions, blog posts, ideas)
 
 **Goal**: Reduce marketing time to 45 mins/week (Instagram) + 2-3 hours/month (blog) while maintaining consistent, high-quality content.
 
@@ -28,7 +28,7 @@ app/
 │   ├── auth/[...nextauth]/ # NextAuth handlers
 │   ├── shopify/            # Shopify sync endpoints
 │   ├── instagram/          # Instagram API endpoints
-│   └── ai/                 # Claude API endpoints
+│   └── ai/                 # Gemini API endpoints
 ├── dashboard/              # Main app pages
 │   ├── page.tsx            # Dashboard home
 │   ├── instagram/          # Instagram content creator
@@ -71,7 +71,7 @@ drizzle/                    # Database migrations
 
 ### Phase 2: Instagram Intelligence
 - [ ] Instagram OAuth connection
-- [ ] AI idea generation (Claude API)
+- [ ] AI idea generation (Gemini Flash)
 - [ ] Caption generator
 - [ ] Instagram post creator UI
 - [ ] Scheduling via Instagram API
@@ -109,7 +109,7 @@ Required in `.env.local`:
 Optional (configure when ready):
 - `SHOPIFY_ACCESS_TOKEN` - Shopify Admin API token
 - `INSTAGRAM_CLIENT_ID/SECRET` - Instagram OAuth
-- `ANTHROPIC_API_KEY` - Claude API key
+- `GOOGLE_AI_API_KEY` - Gemini API key
 
 ## Dev Bypass Mode
 
@@ -132,8 +132,9 @@ When `DEV_BYPASS_AUTH=true`:
 - Rate limit: 200 calls/hour
 - Endpoints: insights, media, media_publish
 
-### Claude API
-- Model: claude-sonnet-4-20250514 (for cost efficiency)
+### Gemini API (Google AI)
+- Model: `gemini-2.0-flash` (fast, cost-effective)
+- SDK: `@google/generative-ai`
 - Use for: Caption generation, blog scaffolding, idea suggestions
 
 ## Design Principles
