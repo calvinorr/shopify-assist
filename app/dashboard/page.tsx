@@ -1,7 +1,8 @@
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Instagram, FileText, TrendingUp, Clock, Palette, MapPin } from "lucide-react";
+import { SyncButton } from "@/components/shopify/sync-button";
+import { Instagram, FileText, TrendingUp, Clock, Palette, MapPin, ShoppingBag } from "lucide-react";
 
 export default function DashboardPage() {
   return (
@@ -99,13 +100,16 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-4">
-                <div>
-                  <p className="font-medium">Connect Shopify</p>
-                  <p className="text-sm text-zinc-500">
-                    Add your store credentials to start syncing product data
-                  </p>
+                <div className="flex items-center gap-3">
+                  <ShoppingBag className="h-5 w-5 text-zinc-500" />
+                  <div>
+                    <p className="font-medium">Sync Shopify Products</p>
+                    <p className="text-sm text-zinc-500">
+                      Fetch latest products, inventory, and pricing from your store
+                    </p>
+                  </div>
                 </div>
-                <Button size="sm">Configure</Button>
+                <SyncButton />
               </div>
               <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-4">
                 <div>
