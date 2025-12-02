@@ -2,13 +2,15 @@
 
 import { Bell, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { type ReactNode } from "react";
 
 interface HeaderProps {
   title: string;
   description?: string;
+  children?: ReactNode;
 }
 
-export function Header({ title, description }: HeaderProps) {
+export function Header({ title, description, children }: HeaderProps) {
   return (
     <header
       className="flex h-16 items-center justify-between px-6"
@@ -34,12 +36,16 @@ export function Header({ title, description }: HeaderProps) {
         )}
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          <Bell className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="sm">
-          <User className="h-5 w-5" />
-        </Button>
+        {children || (
+          <>
+            <Button variant="ghost" size="sm">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="sm">
+              <User className="h-5 w-5" />
+            </Button>
+          </>
+        )}
       </div>
     </header>
   );

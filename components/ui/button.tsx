@@ -12,11 +12,13 @@ const variantStyles = {
   primary: {
     backgroundColor: 'var(--text-primary)',
     color: 'var(--card-bg)',
+    border: 'none',
     hover: { backgroundColor: 'var(--text-secondary)' }
   },
   secondary: {
     backgroundColor: 'var(--walnut-light)',
     color: 'var(--walnut)',
+    border: 'none',
     hover: { backgroundColor: 'var(--card-border)' }
   },
   outline: {
@@ -28,11 +30,13 @@ const variantStyles = {
   ghost: {
     backgroundColor: 'transparent',
     color: 'var(--text-secondary)',
+    border: 'none',
     hover: { backgroundColor: 'var(--background)' }
   },
   danger: {
     backgroundColor: 'var(--danger)',
     color: 'white',
+    border: 'none',
     hover: { backgroundColor: '#8b4444' }
   }
 };
@@ -56,7 +60,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         style={{
           backgroundColor: variantStyle.backgroundColor,
           color: variantStyle.color,
-          border: variantStyle.border || 'none',
+          border: variantStyle.border,
           ...style
         }}
         onMouseEnter={(e) => {
