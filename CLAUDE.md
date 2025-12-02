@@ -58,14 +58,39 @@ hooks/                      # Custom React hooks
 drizzle/                    # Database migrations
 ```
 
+## Current Session Progress
+
+**Last updated**: Dec 2, 2025
+
+### Completed This Session
+- [x] Project scaffolded with Next.js 14+, Tailwind v4, TypeScript
+- [x] Turso database created (`shopify-assist-db`) and schema pushed
+- [x] NextAuth v5 configured with dev bypass mode (`DEV_BYPASS_AUTH=true`)
+- [x] Dashboard layout with sidebar navigation
+- [x] Switched from Claude API to Gemini Flash (cost savings)
+- [x] Created `lib/gemini.ts` with AI helper functions
+- [x] GitHub repo created: https://github.com/calvinorr/shopify-assist
+
+### API Keys Configured
+- [x] `DATABASE_URL` + `DATABASE_AUTH_TOKEN` (Turso)
+- [x] `SHOPIFY_ACCESS_TOKEN` (shpat_...) - scopes: read_products, read_orders, read_analytics, read_inventory
+- [x] `GOOGLE_AI_API_KEY` (Gemini Flash)
+- [ ] Instagram (Phase 2)
+
+### Next Steps
+1. **Build Shopify product sync** - Fetch products via GraphQL, store in Turso
+2. **Wire up dashboard** - Display real product/color data
+3. **Create products page** - List synced products
+4. **Basic blog editor** - TipTap implementation
+
 ## Development Phases
 
 ### Phase 1: MVP (Current)
 - [x] Project scaffolding
 - [x] Database schema setup
 - [x] Auth with dev bypass
-- [ ] Shopify OAuth integration
-- [ ] Product sync from Shopify
+- [x] Gemini AI integration (`lib/gemini.ts`)
+- [ ] Shopify product sync ← **START HERE**
 - [ ] Basic dashboard with real data
 - [ ] Basic blog editor (TipTap)
 
