@@ -3,13 +3,18 @@ import { type HTMLAttributes } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {}
 
-export function Card({ className, ...props }: CardProps) {
+export function Card({ className, style, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-zinc-200 bg-white shadow-sm",
+        "rounded-xl shadow-sm transition-shadow hover:shadow-md",
         className
       )}
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
+        ...style
+      }}
       {...props}
     />
   );
@@ -24,19 +29,21 @@ export function CardHeader({ className, ...props }: CardProps) {
   );
 }
 
-export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+export function CardTitle({ className, style, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
       className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+      style={{ color: 'var(--text-primary)', ...style }}
       {...props}
     />
   );
 }
 
-export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+export function CardDescription({ className, style, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-sm text-zinc-500", className)}
+      className={cn("text-sm", className)}
+      style={{ color: 'var(--text-muted)', ...style }}
       {...props}
     />
   );

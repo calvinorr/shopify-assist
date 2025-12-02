@@ -10,11 +10,27 @@ interface HeaderProps {
 
 export function Header({ title, description }: HeaderProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-6">
+    <header
+      className="flex h-16 items-center justify-between px-6"
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        borderBottom: '1px solid var(--card-border)'
+      }}
+    >
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">{title}</h1>
+        <h1
+          className="text-xl font-semibold"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {title}
+        </h1>
         {description && (
-          <p className="text-sm text-zinc-500">{description}</p>
+          <p
+            className="text-sm"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {description}
+          </p>
         )}
       </div>
       <div className="flex items-center gap-2">

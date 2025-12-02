@@ -11,47 +11,55 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Weekly overview of your content performance"
       />
-      <div className="p-6">
+      <div className="p-6" style={{ backgroundColor: 'var(--background)' }}>
         {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Instagram Posts</CardTitle>
-              <Instagram className="h-4 w-4 text-zinc-500" />
+              <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--indigo-light)' }}>
+                <Instagram className="h-4 w-4" style={{ color: 'var(--indigo)' }} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-zinc-500">scheduled this week</p>
+              <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>0</div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>scheduled this week</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-              <FileText className="h-4 w-4 text-zinc-500" />
+              <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--madder-light)' }}>
+                <FileText className="h-4 w-4" style={{ color: 'var(--madder)' }} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-zinc-500">drafts in progress</p>
+              <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>0</div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>drafts in progress</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Engagement</CardTitle>
-              <TrendingUp className="h-4 w-4 text-zinc-500" />
+              <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--success-light)' }}>
+                <TrendingUp className="h-4 w-4" style={{ color: 'var(--success)' }} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--%</div>
-              <p className="text-xs text-zinc-500">avg engagement rate</p>
+              <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>--%</div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>avg engagement rate</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Best Time</CardTitle>
-              <Clock className="h-4 w-4 text-zinc-500" />
+              <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--weld-light)' }}>
+                <Clock className="h-4 w-4" style={{ color: 'var(--weld)' }} />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">--:--</div>
-              <p className="text-xs text-zinc-500">optimal posting time</p>
+              <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>--:--</div>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>optimal posting time</p>
             </CardContent>
           </Card>
         </div>
@@ -62,14 +70,19 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" />
+                <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--walnut-light)' }}>
+                  <Palette className="h-5 w-5" style={{ color: 'var(--walnut)' }} />
+                </div>
                 Top Selling Colors
               </CardTitle>
               <CardDescription>Last 7 days by location</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex h-48 items-center justify-center text-zinc-400">
-                <p>Connect Shopify to see color data</p>
+              <div
+                className="flex h-48 items-center justify-center rounded-lg"
+                style={{ backgroundColor: 'var(--background)' }}
+              >
+                <p style={{ color: 'var(--text-muted)' }}>Sync products to see color data</p>
               </div>
             </CardContent>
           </Card>
@@ -78,14 +91,19 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
+                <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--indigo-light)' }}>
+                  <MapPin className="h-5 w-5" style={{ color: 'var(--indigo)' }} />
+                </div>
                 Audience Location
               </CardTitle>
               <CardDescription>Where your customers are</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex h-48 items-center justify-center text-zinc-400">
-                <p>Connect Instagram to see audience data</p>
+              <div
+                className="flex h-48 items-center justify-center rounded-lg"
+                style={{ backgroundColor: 'var(--background)' }}
+              >
+                <p style={{ color: 'var(--text-muted)' }}>Connect Instagram to see audience data</p>
               </div>
             </CardContent>
           </Card>
@@ -94,40 +112,61 @@ export default function DashboardPage() {
         {/* Action Items */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Suggested Actions</CardTitle>
-            <CardDescription>AI-powered recommendations based on your data</CardDescription>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Sync data and create content</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-4">
+              <div
+                className="flex items-center justify-between rounded-lg p-4"
+                style={{ backgroundColor: 'var(--background)', border: '1px solid var(--card-border)' }}
+              >
                 <div className="flex items-center gap-3">
-                  <ShoppingBag className="h-5 w-5 text-zinc-500" />
+                  <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--weld-light)' }}>
+                    <ShoppingBag className="h-5 w-5" style={{ color: 'var(--weld)' }} />
+                  </div>
                   <div>
-                    <p className="font-medium">Sync Shopify Products</p>
-                    <p className="text-sm text-zinc-500">
-                      Fetch latest products, inventory, and pricing from your store
+                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Sync Shopify Products</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      Fetch latest products, inventory, and pricing
                     </p>
                   </div>
                 </div>
                 <SyncButton />
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-4">
-                <div>
-                  <p className="font-medium">Connect Instagram</p>
-                  <p className="text-sm text-zinc-500">
-                    Link your business account for analytics and scheduling
-                  </p>
+              <div
+                className="flex items-center justify-between rounded-lg p-4"
+                style={{ backgroundColor: 'var(--background)', border: '1px solid var(--card-border)' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--indigo-light)' }}>
+                    <Instagram className="h-5 w-5" style={{ color: 'var(--indigo)' }} />
+                  </div>
+                  <div>
+                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Connect Instagram</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      Link your business account for analytics
+                    </p>
+                  </div>
                 </div>
-                <Button size="sm" variant="outline">Coming Soon</Button>
+                <Button variant="outline" size="sm">Coming Soon</Button>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-4">
-                <div>
-                  <p className="font-medium">Create your first blog post</p>
-                  <p className="text-sm text-zinc-500">
-                    Use AI to scaffold SEO-optimized content
-                  </p>
+              <div
+                className="flex items-center justify-between rounded-lg p-4"
+                style={{ backgroundColor: 'var(--background)', border: '1px solid var(--card-border)' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg p-2" style={{ backgroundColor: 'var(--madder-light)' }}>
+                    <FileText className="h-5 w-5" style={{ color: 'var(--madder)' }} />
+                  </div>
+                  <div>
+                    <p className="font-medium" style={{ color: 'var(--text-primary)' }}>Create Blog Post</p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      Use AI to scaffold SEO-optimized content
+                    </p>
+                  </div>
                 </div>
-                <Button size="sm" variant="secondary">Start Writing</Button>
+                <Button variant="secondary" size="sm">Start Writing</Button>
               </div>
             </div>
           </CardContent>

@@ -45,9 +45,8 @@ export function SyncButton() {
       </Button>
       {result && (
         <span
-          className={`flex items-center gap-1 text-sm ${
-            result.success ? "text-green-600" : "text-amber-600"
-          }`}
+          className="flex items-center gap-1 text-sm font-medium"
+          style={{ color: result.success ? 'var(--success)' : 'var(--weld)' }}
         >
           {result.success ? (
             <Check className="h-4 w-4" />
