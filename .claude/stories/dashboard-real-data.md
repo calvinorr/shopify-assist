@@ -1,21 +1,21 @@
 # Story: Dashboard with Real Data
 
 **Epic:** See `.claude/epic.md`
-**Status:** not-started
+**Status:** complete
 **Priority:** P1
 **Created:** 2024-12-02
-**Updated:** 2024-12-02
+**Updated:** 2024-12-02 20:50
 
 ## Objective
 Wire the dashboard to display real Shopify product data from Turso, replacing placeholder content.
 
 ## Acceptance Criteria
-- [ ] Dashboard shows top-selling colors (from synced products)
-- [ ] Recent products section displays last 5 products added
-- [ ] Product count and inventory summary displayed
-- [ ] Data fetched via API routes, not direct DB calls from client
-- [ ] Loading states while data fetches
-- [ ] Empty states when no data available
+- [x] Dashboard shows top-selling colors (from synced products)
+- [x] Recent products section displays last 5 products added
+- [x] Product count and inventory summary displayed
+- [x] Data fetched via API routes, not direct DB calls from client
+- [x] Loading states while data fetches
+- [x] Empty states when no data available
 
 ## Implementation Notes
 
@@ -44,4 +44,17 @@ Dashboard Page → SWR/fetch → API Routes → Drizzle → Turso
 - [ ] Stats calculate correctly from DB data
 
 ## Completion Evidence
-_To be filled when complete_
+
+**Tested:** 2024-12-02 20:50
+
+- Dashboard displays 298 products, 93 total inventory
+- Color distribution shows Lac (12), Logwood (6), Indigo (3), Walnut (1), Iron (1)
+- Recent products with images from Shopify CDN
+- Loading spinner during fetch
+- Empty states for unpopulated sections
+
+**Files Created:**
+- `app/api/products/stats/route.ts` - Stats aggregation endpoint
+- `app/api/products/route.ts` - Product list endpoint
+- `components/dashboard/dashboard-content.tsx` - Client component with data fetching
+- Updated `next.config.ts` for Shopify CDN images

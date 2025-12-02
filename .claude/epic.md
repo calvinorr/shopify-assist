@@ -25,7 +25,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
 | Shopify Product Sync | P0 | complete | `stories/shopify-product-sync.md` |
-| Dashboard with Real Data | P1 | not-started | `stories/dashboard-real-data.md` |
+| Dashboard with Real Data | P1 | complete | `stories/dashboard-real-data.md` |
 | Products Page | P1 | not-started | `stories/products-page.md` |
 | Basic Blog Editor | P1 | not-started | `stories/basic-blog-editor.md` |
 
@@ -55,6 +55,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 
 ## Completed Stories
 - [x] **Shopify Product Sync** (P0) - 298 products synced - 2024-12-02
+- [x] **Dashboard with Real Data** (P1) - Live stats + recent products - 2024-12-02
 
 ## Notes
 - Use `/manage` to work through stories
