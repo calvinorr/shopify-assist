@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
 import { useToast } from "@/components/ui/toast";
 import { useAutosaveOnChange } from "@/hooks/use-autosave";
-import { Save, ArrowLeft, Trash2, Loader2, Eye, Edit3, Copy, Sparkles } from "lucide-react";
+import { Save, ArrowLeft, Trash2, Loader2, Eye, Edit3, Copy, Sparkles, Calendar, X } from "lucide-react";
 import Link from "next/link";
+import { formatDistanceToNow, addDays, addWeeks, setHours, setMinutes, startOfWeek, isPast } from "date-fns";
 
 interface BlogPost {
   id: string;
@@ -19,6 +20,7 @@ interface BlogPost {
   metaDescription: string | null;
   focusKeywords: string[];
   status: "draft" | "review" | "published";
+  scheduledAt: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +43,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isGeneratingExcerpt, setIsGeneratingExcerpt] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
 
   const handleExportHTML = async () => {
     try {
@@ -139,6 +142,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
       setExcerpt(data.metaDescription || "");
       setTags(Array.isArray(data.focusKeywords) ? data.focusKeywords.join(", ") : "");
       setStatus(data.status);
+      setScheduledAt(data.scheduledAt ? new Date(data.scheduledAt * 1000) : null);
     } catch {
       showToast("Failed to load post", "error");
       router.push("/dashboard/blog");
@@ -167,6 +171,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
           excerpt: excerpt.trim() || undefined,
           tags: tags.trim() || undefined,
           status,
+          scheduledAt: scheduledAt ? Math.floor(scheduledAt.getTime() / 1000) : undefined,
         }),
       });
 
@@ -189,9 +194,29 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  // Quick schedule presets
+  const handleQuickSchedule = (type: "tomorrow" | "nextMonday" | "oneWeek") => {
+    const now = new Date();
+    let scheduled: Date;
+
+    switch (type) {
+      case "tomorrow":
+        scheduled = setMinutes(setHours(addDays(now, 1), 9), 0);
+        break;
+      case "nextMonday":
+        scheduled = setMinutes(setHours(addDays(startOfWeek(now, { weekStartsOn: 1 }), 7), 9), 0);
+        break;
+      case "oneWeek":
+        scheduled = setMinutes(setHours(addWeeks(now, 1), 9), 0);
+        break;
+    }
+
+    setScheduledAt(scheduled);
+  };
+
   // Auto-save functionality
   const { status: autosaveStatus } = useAutosaveOnChange({
-    values: [title, content, excerpt, tags, status],
+    values: [title, content, excerpt, tags, status, scheduledAt?.toISOString() ?? ""],
     onSave: async () => {
       await handleSave(true);
     },
@@ -418,6 +443,103 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 <option value="review">Review</option>
                 <option value="published">Published</option>
               </select>
+            </div>
+
+            {/* Schedule */}
+            <div>
+              <label
+                htmlFor="schedule"
+                className="flex items-center gap-2 text-xs font-medium mb-2"
+                style={{ color: "var(--text-muted)" }}
+              >
+                <Calendar size={14} />
+                Schedule
+              </label>
+
+              {/* Quick presets */}
+              <div className="flex gap-1 mb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleQuickSchedule("tomorrow")}
+                  className="h-7 px-2 text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Tomorrow 9am
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleQuickSchedule("nextMonday")}
+                  className="h-7 px-2 text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Next Mon
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleQuickSchedule("oneWeek")}
+                  className="h-7 px-2 text-xs"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  In 1 week
+                </Button>
+              </div>
+
+              {/* Date/Time Input */}
+              <input
+                id="schedule"
+                type="datetime-local"
+                value={
+                  scheduledAt
+                    ? new Date(scheduledAt.getTime() - scheduledAt.getTimezoneOffset() * 60000)
+                        .toISOString()
+                        .slice(0, 16)
+                    : ""
+                }
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setScheduledAt(new Date(e.target.value));
+                  } else {
+                    setScheduledAt(null);
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all"
+                style={{
+                  borderColor: "var(--card-border)",
+                  backgroundColor: "var(--background)",
+                  color: "var(--text-primary)",
+                }}
+              />
+
+              {/* Display scheduled info */}
+              {scheduledAt && (
+                <div className="mt-2 space-y-1">
+                  <p
+                    className="text-xs flex items-center justify-between"
+                    style={{
+                      color: isPast(scheduledAt) ? "var(--danger)" : "var(--text-muted)"
+                    }}
+                  >
+                    {isPast(scheduledAt) ? (
+                      <span>Scheduled date is in the past</span>
+                    ) : (
+                      <span>Publishes {formatDistanceToNow(scheduledAt, { addSuffix: true })}</span>
+                    )}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setScheduledAt(null)}
+                    className="h-6 px-2 text-xs gap-1 w-full"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    <X size={12} />
+                    Clear Schedule
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Excerpt */}

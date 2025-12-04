@@ -40,7 +40,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, content, excerpt, tags, status } = body;
+    const { title, content, excerpt, tags, status, scheduledAt } = body;
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
@@ -61,6 +61,9 @@ export async function PUT(
       );
     }
     if (status !== undefined) updateData.status = status;
+    if (scheduledAt !== undefined) {
+      updateData.scheduledAt = scheduledAt ? new Date(scheduledAt * 1000) : null;
+    }
 
     await db.update(blogPosts).set(updateData).where(eq(blogPosts.id, id));
 

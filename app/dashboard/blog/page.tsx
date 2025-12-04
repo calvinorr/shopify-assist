@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { IdeasPanel } from "@/components/blog/ideas-panel";
+import { ContentCalendar } from "@/components/blog/content-calendar";
 import {
   Plus,
   FileText,
@@ -17,9 +18,11 @@ import {
   CalendarDays,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  X
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 
 interface BlogPost {
@@ -36,11 +39,12 @@ interface BlogPost {
   updatedAt: string;
 }
 
-type StatusFilter = "all" | "draft" | "review" | "published" | "scheduled";
+type StatusFilter = "all" | "draft" | "review" | "published" | "scheduled" | "needs_attention";
 type SortOption = "date_created" | "date_updated" | "title" | "scheduled_date";
 type ViewMode = "list" | "calendar";
 
 export default function BlogPage() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +55,10 @@ export default function BlogPage() {
   const [sortOption, setSortOption] = useState<SortOption>("date_updated");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  // Bulk actions state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -88,6 +96,89 @@ export default function BlogPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  // Bulk actions handlers
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredAndSortedPosts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAndSortedPosts.map(p => p.id)));
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    const confirmMessage = `Delete ${selectedIds.size} post${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const response = await fetch("/api/blog", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPosts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+        setSelectedIds(new Set());
+        showToast(data.message);
+      } else {
+        const data = await response.json();
+        showToast(data.error || "Failed to delete posts", "error");
+      }
+    } catch {
+      showToast("Failed to delete posts", "error");
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkStatusChange = async (status: "draft" | "review" | "published") => {
+    if (selectedIds.size === 0) return;
+
+    setIsBulkProcessing(true);
+    try {
+      const response = await fetch("/api/blog", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds), status })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update local state
+        setPosts((prev) => prev.map((p) =>
+          selectedIds.has(p.id) ? { ...p, status, updatedAt: new Date().toISOString() } : p
+        ));
+        setSelectedIds(new Set());
+        showToast(data.message);
+      } else {
+        const data = await response.json();
+        showToast(data.error || "Failed to update posts", "error");
+      }
+    } catch {
+      showToast("Failed to update posts", "error");
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
   };
 
   // Calculate SEO score
@@ -154,6 +245,8 @@ export default function BlogPage() {
       filtered = filtered.filter(
         (p) => p.scheduledAt && new Date(p.scheduledAt) > new Date()
       );
+    } else if (statusFilter === "needs_attention") {
+      filtered = filtered.filter((p) => calculateSEOScore(p) < 50);
     } else if (statusFilter !== "all") {
       filtered = filtered.filter((p) => p.status === statusFilter);
     }
@@ -302,9 +395,30 @@ export default function BlogPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              {/* Left: Status Filters */}
-              <div className="flex flex-wrap gap-2">
-                {(["all", "draft", "review", "published", "scheduled"] as StatusFilter[]).map((filter) => (
+              {/* Left: Select All + Status Filters */}
+              <div className="flex flex-wrap gap-2 items-center">
+                {/* Select All Checkbox */}
+                {filteredAndSortedPosts.length > 0 && (
+                  <label className="flex items-center gap-2 px-3 py-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === filteredAndSortedPosts.length && filteredAndSortedPosts.length > 0}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 cursor-pointer"
+                      style={{ accentColor: "var(--indigo)" }}
+                    />
+                    <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                      {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select All"}
+                    </span>
+                  </label>
+                )}
+
+                {/* Divider */}
+                {filteredAndSortedPosts.length > 0 && (
+                  <div className="h-8 w-px" style={{ backgroundColor: "var(--card-border)" }} />
+                )}
+
+                {(["all", "draft", "review", "published", "scheduled", "needs_attention"] as StatusFilter[]).map((filter) => (
                   <button
                     key={filter}
                     onClick={() => setStatusFilter(filter)}
@@ -315,7 +429,7 @@ export default function BlogPage() {
                       border: `1px solid ${statusFilter === filter ? "var(--text-primary)" : "var(--card-border)"}`,
                     }}
                   >
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    {filter === "needs_attention" ? "Needs Attention" : filter.charAt(0).toUpperCase() + filter.slice(1)}
                   </button>
                 ))}
               </div>
@@ -385,26 +499,88 @@ export default function BlogPage() {
           </CardContent>
         </Card>
 
+        {/* Bulk Actions Bar */}
+        {selectedIds.size > 0 && (
+          <Card
+            className="sticky top-20 z-10"
+            style={{
+              backgroundColor: "var(--indigo-light)",
+              borderColor: "var(--indigo)",
+            }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold" style={{ color: "var(--indigo)" }}>
+                    {selectedIds.size} post{selectedIds.size > 1 ? 's' : ''} selected
+                  </span>
+                  <button
+                    onClick={clearSelection}
+                    className="text-sm underline hover:no-underline"
+                    style={{ color: "var(--indigo)" }}
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkStatusChange("draft")}
+                    disabled={isBulkProcessing}
+                  >
+                    {isBulkProcessing ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                    Mark as Draft
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkStatusChange("review")}
+                    disabled={isBulkProcessing}
+                  >
+                    {isBulkProcessing ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                    Mark as Review
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleBulkStatusChange("published")}
+                    disabled={isBulkProcessing}
+                  >
+                    {isBulkProcessing ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                    Mark as Published
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    disabled={isBulkProcessing}
+                    style={{ color: "var(--danger)" }}
+                  >
+                    {isBulkProcessing ? (
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                    ) : (
+                      <Trash2 size={16} className="mr-2" />
+                    )}
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Posts List or Calendar View */}
         {viewMode === "calendar" ? (
           <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <CalendarDays
-                  size={48}
-                  className="mx-auto mb-4 opacity-50"
-                  style={{ color: "var(--text-muted)" }}
-                />
-                <h3
-                  className="text-lg font-semibold mb-2"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  Calendar View Coming Soon
-                </h3>
-                <p style={{ color: "var(--text-muted)" }}>
-                  Visualize your content schedule with a calendar interface
-                </p>
-              </div>
+            <CardContent className="p-6">
+              <ContentCalendar
+                posts={filteredAndSortedPosts}
+                onCreatePost={(date) => {
+                  router.push(`/dashboard/blog/new?date=${date.toISOString()}`);
+                }}
+              />
             </CardContent>
           </Card>
         ) : (
@@ -435,12 +611,24 @@ export default function BlogPage() {
                     return (
                       <div
                         key={post.id}
-                        className="flex items-start justify-between p-4 rounded-lg border transition-all hover:shadow-md"
+                        className="flex items-start gap-3 p-4 rounded-lg border transition-all hover:shadow-md"
                         style={{
-                          borderColor: "var(--card-border)",
-                          backgroundColor: "var(--background)",
+                          borderColor: selectedIds.has(post.id) ? "var(--indigo)" : "var(--card-border)",
+                          backgroundColor: selectedIds.has(post.id) ? "var(--indigo-light)" : "var(--background)",
                         }}
                       >
+                        {/* Checkbox */}
+                        <div className="flex items-start pt-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(post.id)}
+                            onChange={() => handleToggleSelect(post.id)}
+                            className="w-4 h-4 cursor-pointer"
+                            style={{ accentColor: "var(--indigo)" }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <h3

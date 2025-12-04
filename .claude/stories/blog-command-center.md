@@ -1,10 +1,11 @@
 # Story: Blog Command Center
 
 **Epic:** See `.claude/epic.md`
-**Status:** in-progress
+**Status:** complete
 **Priority:** P0
 **Created:** 2024-12-04
 **Updated:** 2024-12-04
+**Completed:** 2024-12-04
 
 ## Objective
 Transform the blog page into a professional-grade command center that an expert blogger with millions of followers would expect - combining content management, AI-powered ideation, scheduling, and SEO optimization in one powerful interface.
@@ -33,20 +34,20 @@ Blog content is SEO gold - it compounds over time, drives organic traffic, and e
 
 ### Section 2: Content Calendar View
 - [x] Toggle between "List" and "Calendar" view
-- [ ] Calendar shows posts by scheduled/published date (placeholder implemented)
-- [ ] Color coding: Draft (gray), Scheduled (blue), Published (green)
-- [ ] Click date to create post scheduled for that day
-- [ ] Drag-drop posts to reschedule (stretch goal)
+- [x] Calendar shows posts by scheduled/published date
+- [x] Color coding: Draft (gray), Review (yellow), Published (green)
+- [x] Click date to create post scheduled for that day
+- [ ] Drag-drop posts to reschedule (stretch goal - future enhancement)
 
 ### Section 3: Enhanced Post Management
-- [x] Filter by status: All | Draft | Scheduled | Published
+- [x] Filter by status: All | Draft | Scheduled | Published | Needs Attention
 - [x] Sort by: Date Created | Date Updated | Title | Scheduled Date
 - [x] Search posts by title or content
-- [ ] Bulk actions: Archive, Delete, Change Status
+- [x] Bulk actions: Select All, Delete Selected, Change Status (Draft/Review/Published)
 - [x] Post cards show: title, excerpt preview, status badge, scheduled date, SEO score indicator
 
 ### Section 4: Scheduling System
-- [ ] "Schedule" field in blog editor (date/time picker)
+- [x] "Schedule" field in blog editor (date/time picker with quick presets)
 - [x] Scheduled posts show countdown ("Publishes in 3 days")
 - [x] Database schema update: `scheduled_at` column on blog_posts
 - [x] API endpoint to fetch posts by schedule status
@@ -60,7 +61,7 @@ Blog content is SEO gold - it compounds over time, drives organic traffic, and e
   - Content length > 500 words (15 pts)
   - Has internal links (15 pts)
 - [x] Visual indicator: Red (<50), Yellow (50-75), Green (75+)
-- [ ] "Needs Attention" filter to show low-SEO posts
+- [x] "Needs Attention" filter to show low-SEO posts
 
 ### Section 6: Start This Post Flow
 - [x] Clicking "Start This Post" on idea card:

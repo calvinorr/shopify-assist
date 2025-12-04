@@ -45,7 +45,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
-| **Blog Command Center** | **P0** | not-started | `stories/blog-command-center.md` |
+| **Blog Command Center** | **P0** | complete | `stories/blog-command-center.md` |
 
 *Note: Blog Command Center supersedes the originally planned AI Blog Topic Suggestions, Blog Post Scaffolding, and Enhanced Blog Editor stories - combining them into one comprehensive feature.*
 
@@ -65,6 +65,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 - [x] **AI Idea Generation** (P1) - Gemini-powered Instagram & blog ideas - 2024-12-03
 - [x] **Caption Generator** (P2) - Modal with 3 captions + categorized hashtags - 2024-12-03
 - [x] **Blog AI Enhancements** (P2) - Generate excerpt + suggest tags buttons - 2024-12-03
+- [x] **Blog Command Center** (P0) - Full blog management with calendar, scheduling, SEO scoring - 2024-12-04
 
 ## Notes
 - Use `/manage` to work through stories
