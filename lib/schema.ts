@@ -57,8 +57,11 @@ export const blogPosts = sqliteTable("blog_posts", {
   featuredImageUrl: text("featured_image_url"),
   metaDescription: text("meta_description"),
   focusKeywords: text("focus_keywords"), // JSON array
+  focusKeyword: text("focus_keyword"), // Primary SEO keyword
+  seoScore: integer("seo_score").default(0), // SEO score 0-100
   status: text("status").$type<"draft" | "review" | "published">().default("draft"),
   publishedAt: integer("published_at", { mode: "timestamp" }),
+  scheduledAt: integer("scheduled_at", { mode: "timestamp" }), // Auto-publish scheduling
   shopifyProductLinks: text("shopify_product_links"), // JSON array
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),

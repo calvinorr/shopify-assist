@@ -1,7 +1,7 @@
 # Story: Blog Command Center
 
 **Epic:** See `.claude/epic.md`
-**Status:** not-started
+**Status:** in-progress
 **Priority:** P0
 **Created:** 2024-12-04
 **Updated:** 2024-12-04
@@ -20,56 +20,56 @@ Blog content is SEO gold - it compounds over time, drives organic traffic, and e
 ## Acceptance Criteria
 
 ### Section 1: Quick Ideas Panel (Top of Page)
-- [ ] "Fresh Ideas" section showing 5 AI-generated blog topics
-- [ ] Ideas are contextual based on:
+- [x] "Fresh Ideas" section showing 5 AI-generated blog topics
+- [x] Ideas are contextual based on:
   - Current season (winter/spring/summer/fall)
   - Upcoming holidays (Christmas, Easter, Mother's Day, etc.)
   - Nature events (solstice, lambing season, dye plant harvests)
   - Shopify data (trending colors, bestsellers, new arrivals)
-- [ ] Each idea card shows: title, hook sentence, suggested keywords
-- [ ] "Refresh Ideas" button to generate new batch
-- [ ] "Start This Post" button → creates scaffolded draft and opens editor
-- [ ] Ideas persist in localStorage until dismissed or started
+- [x] Each idea card shows: title, hook sentence, suggested keywords
+- [x] "Refresh Ideas" button to generate new batch
+- [x] "Start This Post" button → creates scaffolded draft and opens editor
+- [x] Ideas persist in localStorage until dismissed or started
 
 ### Section 2: Content Calendar View
-- [ ] Toggle between "List" and "Calendar" view
-- [ ] Calendar shows posts by scheduled/published date
+- [x] Toggle between "List" and "Calendar" view
+- [ ] Calendar shows posts by scheduled/published date (placeholder implemented)
 - [ ] Color coding: Draft (gray), Scheduled (blue), Published (green)
 - [ ] Click date to create post scheduled for that day
 - [ ] Drag-drop posts to reschedule (stretch goal)
 
 ### Section 3: Enhanced Post Management
-- [ ] Filter by status: All | Draft | Scheduled | Published
-- [ ] Sort by: Date Created | Date Updated | Title | Scheduled Date
-- [ ] Search posts by title or content
+- [x] Filter by status: All | Draft | Scheduled | Published
+- [x] Sort by: Date Created | Date Updated | Title | Scheduled Date
+- [x] Search posts by title or content
 - [ ] Bulk actions: Archive, Delete, Change Status
-- [ ] Post cards show: title, excerpt preview, status badge, scheduled date, SEO score indicator
+- [x] Post cards show: title, excerpt preview, status badge, scheduled date, SEO score indicator
 
 ### Section 4: Scheduling System
 - [ ] "Schedule" field in blog editor (date/time picker)
-- [ ] Scheduled posts show countdown ("Publishes in 3 days")
-- [ ] Database schema update: `scheduled_at` column on blog_posts
-- [ ] API endpoint to fetch posts by schedule status
+- [x] Scheduled posts show countdown ("Publishes in 3 days")
+- [x] Database schema update: `scheduled_at` column on blog_posts
+- [x] API endpoint to fetch posts by schedule status
 
 ### Section 5: SEO Health Indicators
-- [ ] Simple SEO score per post (0-100) based on:
+- [x] Simple SEO score per post (0-100) based on:
   - Has meta description (20 pts)
   - Meta description is 150-160 chars (10 pts)
   - Has focus keyword (20 pts)
   - Title includes keyword (20 pts)
   - Content length > 500 words (15 pts)
   - Has internal links (15 pts)
-- [ ] Visual indicator: Red (<50), Yellow (50-75), Green (75+)
+- [x] Visual indicator: Red (<50), Yellow (50-75), Green (75+)
 - [ ] "Needs Attention" filter to show low-SEO posts
 
 ### Section 6: Start This Post Flow
-- [ ] Clicking "Start This Post" on idea card:
+- [x] Clicking "Start This Post" on idea card:
   1. Shows loading state
   2. Calls AI to generate full scaffold (title, meta, 5-7 sections)
   3. Creates draft in database with scaffold content
   4. Redirects to editor with content ready to edit
-- [ ] Scaffold includes actual Shopify product references where relevant
-- [ ] Uses Herbarium's artisan voice (educational, storytelling)
+- [x] Scaffold includes actual Shopify product references where relevant
+- [x] Uses Herbarium's artisan voice (educational, storytelling)
 
 ## Implementation Notes
 
