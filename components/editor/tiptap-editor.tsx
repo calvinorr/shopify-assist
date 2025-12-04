@@ -3,6 +3,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import Link from "@tiptap/extension-link";
 import {
   Bold,
   Italic,
@@ -22,6 +23,7 @@ interface TiptapEditorProps {
 
 export function TiptapEditor({ content, onChange, placeholder = "Start writing..." }: TiptapEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -31,11 +33,17 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
       Placeholder.configure({
         placeholder,
       }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: "text-indigo-600 underline cursor-pointer hover:text-madder",
+        },
+      }),
     ],
     content,
     editorProps: {
       attributes: {
-        class: "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[500px] max-w-none",
+        class: "prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none h-full max-w-none",
         style: "color: var(--text-primary);",
       },
     },
@@ -45,7 +53,19 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
   });
 
   if (!editor) {
-    return null;
+    return (
+      <div
+        className="border rounded-lg overflow-hidden h-full flex flex-col"
+        style={{
+          borderColor: "var(--card-border)",
+          backgroundColor: "var(--card-bg)",
+        }}
+      >
+        <div className="p-4 flex-1 flex items-center justify-center">
+          <p style={{ color: "var(--text-muted)" }}>Loading editor...</p>
+        </div>
+      </div>
+    );
   }
 
   const ToolbarButton = ({
@@ -62,6 +82,7 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
     <button
       type="button"
       onClick={onClick}
+      tabIndex={-1}
       className={`p-2 rounded hover:bg-opacity-10 transition-colors ${
         isActive ? "bg-opacity-15" : ""
       }`}
@@ -75,16 +96,22 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
     </button>
   );
 
-  const addLink = () => {
-    const url = window.prompt("Enter URL:");
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
+  const toggleLink = () => {
+    if (editor.isActive("link")) {
+      editor.chain().focus().unsetLink().run();
+    } else {
+      // For now, just wrap selection in a link with a placeholder URL
+      // User can edit the href in the HTML later or we can add a proper modal
+      const selection = editor.state.selection;
+      if (!selection.empty) {
+        editor.chain().focus().setLink({ href: "#" }).run();
+      }
     }
   };
 
   return (
     <div
-      className="border rounded-lg overflow-hidden"
+      className="border rounded-lg overflow-hidden h-full flex flex-col"
       style={{
         borderColor: "var(--card-border)",
         backgroundColor: "var(--card-bg)",
@@ -92,7 +119,7 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
     >
       {/* Toolbar */}
       <div
-        className="flex items-center gap-1 p-2 border-b"
+        className="flex items-center gap-1 p-2 border-b flex-shrink-0"
         style={{
           borderBottomColor: "var(--card-border)",
           backgroundColor: "var(--background)",
@@ -144,16 +171,16 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
         <div className="w-px h-6 mx-1" style={{ backgroundColor: "var(--card-border)" }} />
 
         <ToolbarButton
-          onClick={addLink}
+          onClick={toggleLink}
           isActive={editor.isActive("link")}
           icon={LinkIcon}
-          label="Add Link"
+          label="Toggle Link"
         />
       </div>
 
       {/* Editor */}
-      <div className="p-6">
-        <EditorContent editor={editor} />
+      <div className="p-4 flex-1 overflow-auto">
+        <EditorContent editor={editor} className="h-full" />
       </div>
 
       {/* Custom styles for the editor */}

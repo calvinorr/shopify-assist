@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,19 +8,37 @@ import { Button } from "@/components/ui/button";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
 import { useToast } from "@/components/ui/toast";
 import { useAutosaveOnChange } from "@/hooks/use-autosave";
-import { Save, ArrowLeft, Eye, Edit3, Copy, Sparkles, Loader2 } from "lucide-react";
+import { Save, ArrowLeft, Trash2, Loader2, Eye, Edit3, Copy, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-export default function NewBlogPostPage() {
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  contentHtml: string | null;
+  metaDescription: string | null;
+  focusKeywords: string[];
+  status: "draft" | "review" | "published";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const { showToast } = useToast();
+
+  const [post, setPost] = useState<BlogPost | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [tags, setTags] = useState("");
+  const [status, setStatus] = useState<"draft" | "review" | "published">("draft");
+
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [postId, setPostId] = useState<string | null>(null);
   const [isGeneratingExcerpt, setIsGeneratingExcerpt] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
 
@@ -98,6 +116,37 @@ export default function NewBlogPostPage() {
     }
   };
 
+  useEffect(() => {
+    fetchPost();
+  }, [id]);
+
+  const fetchPost = async () => {
+    try {
+      const response = await fetch(`/api/blog/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          showToast("Post not found", "error");
+          router.push("/dashboard/blog");
+          return;
+        }
+        throw new Error("Failed to load post");
+      }
+
+      const data: BlogPost = await response.json();
+      setPost(data);
+      setTitle(data.title);
+      setContent(data.contentHtml || "");
+      setExcerpt(data.metaDescription || "");
+      setTags(Array.isArray(data.focusKeywords) ? data.focusKeywords.join(", ") : "");
+      setStatus(data.status);
+    } catch {
+      showToast("Failed to load post", "error");
+      router.push("/dashboard/blog");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSave = async (silent = false) => {
     if (!title.trim()) {
       if (!silent) {
@@ -109,30 +158,17 @@ export default function NewBlogPostPage() {
     setIsSaving(true);
 
     try {
-      // If we already have a post ID, update instead of create
-      const response = postId
-        ? await fetch(`/api/blog/${postId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title: title.trim(),
-              content,
-              excerpt: excerpt.trim() || undefined,
-              tags: tags.trim() || undefined,
-              status: "draft",
-            }),
-          })
-        : await fetch("/api/blog", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title: title.trim(),
-              content,
-              excerpt: excerpt.trim() || undefined,
-              tags: tags.trim() || undefined,
-              status: "draft",
-            }),
-          });
+      const response = await fetch(`/api/blog/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          content,
+          excerpt: excerpt.trim() || undefined,
+          tags: tags.trim() || undefined,
+          status,
+        }),
+      });
 
       const data = await response.json();
 
@@ -140,14 +176,8 @@ export default function NewBlogPostPage() {
         throw new Error(data.error || "Failed to save");
       }
 
-      // Store the post ID after first save
-      if (!postId && data.id) {
-        setPostId(data.id);
-      }
-
       if (!silent) {
-        showToast("Blog post saved successfully");
-        router.push("/dashboard/blog");
+        showToast("Post updated successfully");
       }
     } catch (error) {
       if (!silent) {
@@ -161,13 +191,32 @@ export default function NewBlogPostPage() {
 
   // Auto-save functionality
   const { status: autosaveStatus } = useAutosaveOnChange({
-    values: [title, content, excerpt, tags],
+    values: [title, content, excerpt, tags, status],
     onSave: async () => {
       await handleSave(true);
     },
     delay: 30000, // 30 seconds
-    enabled: title.trim().length > 0, // Only auto-save if there's a title
+    enabled: !isLoading && title.trim().length > 0, // Only auto-save if loaded and has title
   });
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/blog/${id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+
+      showToast("Post deleted");
+      router.push("/dashboard/blog");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to delete post", "error");
+      setIsDeleting(false);
+    }
+  };
 
   const canSave = title.trim().length > 0;
 
@@ -176,19 +225,40 @@ export default function NewBlogPostPage() {
     if (isSaving) return "Saving...";
     if (autosaveStatus === "saved") return "Saved";
     if (autosaveStatus === "error") return "Save failed";
-    if (autosaveStatus === "idle" && postId) return "Unsaved changes";
+    if (autosaveStatus === "idle") return "Unsaved changes";
     return null;
   };
 
   const statusText = getStatusText();
 
+  if (isLoading) {
+    return (
+      <>
+        <Header title="Edit Blog Post" description="Loading..." />
+        <div className="p-6 max-w-5xl mx-auto">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--text-muted)" }} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  }
+
+  if (!post) {
+    return null;
+  }
+
   return (
     <>
       <Header
-        title="New Blog Post"
+        title="Edit Blog Post"
         description={
           <div className="flex items-center gap-2">
-            <span>Create a new blog post with AI assistance</span>
+            <span>Last updated {new Date(post.updatedAt).toLocaleDateString()}</span>
             {statusText && (
               <>
                 <span style={{ color: "var(--text-muted)" }}>•</span>
@@ -219,6 +289,18 @@ export default function NewBlogPostPage() {
               Back
             </Button>
           </Link>
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Trash2 size={18} style={{ color: "var(--danger)" }} />
+            )}
+          </Button>
           <Button
             variant="outline"
             size="md"
@@ -252,7 +334,7 @@ export default function NewBlogPostPage() {
             disabled={!canSave || isSaving}
           >
             <Save size={18} className="mr-2" />
-            {isSaving ? "Saving..." : "Save Draft"}
+            {isSaving ? "Saving..." : "Save"}
           </Button>
         </div>
       </Header>
@@ -312,6 +394,32 @@ export default function NewBlogPostPage() {
         {/* Sidebar - Right Side */}
         <Card className="w-72 flex-shrink-0">
           <CardContent className="p-4 space-y-4">
+            {/* Status */}
+            <div>
+              <label
+                htmlFor="status"
+                className="block text-xs font-medium mb-1"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Status
+              </label>
+              <select
+                id="status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as "draft" | "review" | "published")}
+                className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all"
+                style={{
+                  borderColor: "var(--card-border)",
+                  backgroundColor: "var(--background)",
+                  color: "var(--text-primary)",
+                }}
+              >
+                <option value="draft">Draft</option>
+                <option value="review">Review</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+
             {/* Excerpt */}
             <div>
               <div className="flex items-center justify-between mb-1">

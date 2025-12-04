@@ -6,7 +6,7 @@ import { type ReactNode } from "react";
 
 interface HeaderProps {
   title: string;
-  description?: string;
+  description?: string | ReactNode;
   children?: ReactNode;
 }
 
@@ -27,12 +27,12 @@ export function Header({ title, description, children }: HeaderProps) {
           {title}
         </h1>
         {description && (
-          <p
+          <div
             className="text-sm"
             style={{ color: 'var(--text-muted)' }}
           >
             {description}
-          </p>
+          </div>
         )}
       </div>
       <div className="flex items-center gap-2">

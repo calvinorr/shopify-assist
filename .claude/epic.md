@@ -28,23 +28,26 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Dashboard with Real Data | P1 | complete | `stories/dashboard-real-data.md` |
 | Products Page | P1 | complete | `stories/products-page.md` |
 | Basic Blog Editor | P1 | complete | `stories/basic-blog-editor.md` |
+| Frontpage Design | P0 | complete | `stories/frontpage-design.md` |
+| Blog AI Enhancements | P2 | complete | `stories/blog-ai-enhancements.md` |
 
 ### Phase 2: Instagram Intelligence
 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
 | Instagram OAuth Connection | P1 | not-started | `stories/instagram-oauth.md` |
-| AI Idea Generation | P1 | not-started | `stories/ai-idea-generation.md` |
-| Caption Generator | P2 | not-started | `stories/caption-generator.md` |
+| AI Idea Generation | P1 | complete | `stories/ai-idea-generation.md` |
+| Mobile App (Instagram workaround) | P3 | backlog | `stories/mobile-app.md` |
+| Caption Generator | P2 | complete | `stories/caption-generator.md` |
 | Instagram Post Creator UI | P2 | not-started | `stories/instagram-post-creator.md` |
 
 ### Phase 3: Blog Intelligence
 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
-| AI Blog Topic Suggestions | P2 | not-started | `stories/ai-blog-topics.md` |
-| Blog Post Scaffolding | P2 | not-started | `stories/blog-scaffolding.md` |
-| Enhanced Blog Editor | P2 | not-started | `stories/enhanced-blog-editor.md` |
+| **Blog Command Center** | **P0** | not-started | `stories/blog-command-center.md` |
+
+*Note: Blog Command Center supersedes the originally planned AI Blog Topic Suggestions, Blog Post Scaffolding, and Enhanced Blog Editor stories - combining them into one comprehensive feature.*
 
 ### Phase 4: Analytics Loop
 
@@ -57,7 +60,11 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 - [x] **Shopify Product Sync** (P0) - 298 products synced - 2024-12-02
 - [x] **Dashboard with Real Data** (P1) - Live stats + recent products - 2024-12-02
 - [x] **Products Page** (P1) - Grid view with search/filter - 2024-12-02
-- [x] **Basic Blog Editor** (P1) - TipTap WYSIWYG editor - 2024-12-02
+- [x] **Basic Blog Editor** (P1) - TipTap WYSIWYG with auto-save, preview, export - 2024-12-03
+- [x] **Frontpage Design** (P0) - Content-focused dashboard with AI suggestions - 2024-12-03
+- [x] **AI Idea Generation** (P1) - Gemini-powered Instagram & blog ideas - 2024-12-03
+- [x] **Caption Generator** (P2) - Modal with 3 captions + categorized hashtags - 2024-12-03
+- [x] **Blog AI Enhancements** (P2) - Generate excerpt + suggest tags buttons - 2024-12-03
 
 ## Notes
 - Use `/manage` to work through stories
