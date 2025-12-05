@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
 import {
   Bold,
   Italic,
@@ -12,9 +13,15 @@ import {
   Heading2,
   List,
   ListOrdered,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ShoppingBag,
+  ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProductCard } from "./product-node";
+import { ProductPicker } from "./product-picker";
+import ImageGallery from "./image-gallery";
+import type { Product } from "@/types/product";
 
 interface TiptapEditorProps {
   content: string;
@@ -24,6 +31,9 @@ interface TiptapEditorProps {
 }
 
 export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "Start writing..." }: TiptapEditorProps) {
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [showImageGallery, setShowImageGallery] = useState(false);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -41,6 +51,12 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
           class: "text-indigo-600 underline cursor-pointer hover:text-madder",
         },
       }),
+      Image.configure({
+        HTMLAttributes: {
+          class: "rounded-lg max-w-full h-auto my-4",
+        },
+      }),
+      ProductCard,
     ],
     content,
     editorProps: {
@@ -117,6 +133,21 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
     }
   };
 
+  const handleProductSelect = (product: Product) => {
+    const shopifyUrl = `https://herbariumdyeworks.myshopify.com/products/${product.id}`;
+    editor.chain().focus().insertProductCard({
+      productId: product.id,
+      name: product.name,
+      price: product.price || 0,
+      imageUrl: product.imageUrls[0] || "",
+      shopifyUrl,
+    }).run();
+  };
+
+  const handleImageSelect = (imageUrl: string, altText?: string) => {
+    editor.chain().focus().setImage({ src: imageUrl, alt: altText || "" }).run();
+  };
+
   return (
     <div
       className="border rounded-lg overflow-hidden h-full flex flex-col"
@@ -183,6 +214,19 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
           isActive={editor.isActive("link")}
           icon={LinkIcon}
           label="Toggle Link"
+        />
+
+        <div className="w-px h-6 mx-1" style={{ backgroundColor: "var(--card-border)" }} />
+
+        <ToolbarButton
+          onClick={() => setShowImageGallery(true)}
+          icon={ImageIcon}
+          label="Insert Image from Products"
+        />
+        <ToolbarButton
+          onClick={() => setShowProductPicker(true)}
+          icon={ShoppingBag}
+          label="Insert Product Card"
         />
       </div>
 
@@ -271,7 +315,32 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
         .ProseMirror em {
           font-style: italic;
         }
+
+        .ProseMirror img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 1em 0;
+        }
+
+        .ProseMirror .product-card-wrapper {
+          margin: 1.5em 0;
+        }
       `}</style>
+
+      {/* Product Picker Modal */}
+      <ProductPicker
+        isOpen={showProductPicker}
+        onClose={() => setShowProductPicker(false)}
+        onSelect={handleProductSelect}
+      />
+
+      {/* Image Gallery Modal */}
+      <ImageGallery
+        isOpen={showImageGallery}
+        onClose={() => setShowImageGallery(false)}
+        onSelect={handleImageSelect}
+      />
     </div>
   );
 }
