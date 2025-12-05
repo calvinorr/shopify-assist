@@ -1,6 +1,7 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEffect } from "react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
@@ -18,10 +19,11 @@ import { Button } from "@/components/ui/button";
 interface TiptapEditorProps {
   content: string;
   onChange: (content: string) => void;
+  onEditorReady?: (editor: Editor) => void;
   placeholder?: string;
 }
 
-export function TiptapEditor({ content, onChange, placeholder = "Start writing..." }: TiptapEditorProps) {
+export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "Start writing..." }: TiptapEditorProps) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -51,6 +53,12 @@ export function TiptapEditor({ content, onChange, placeholder = "Start writing..
       onChange(editor.getHTML());
     },
   });
+
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor);
+    }
+  }, [editor, onEditorReady]);
 
   if (!editor) {
     return (

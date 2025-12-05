@@ -148,39 +148,21 @@ IMPORTANT: Return ONLY valid JSON. No markdown formatting, no code blocks, just 
 }
 
 /**
- * Get blog post ideas (from DB or generate new ones)
- * GET /api/blog/ideas
+ * Refresh blog post ideas (dismiss existing, generate new)
+ * POST /api/blog/ideas/refresh
  */
-export async function GET() {
+export async function POST() {
   try {
-    // 1. Query DB for active ideas
-    const activeIdeas = await db
-      .select()
-      .from(blogIdeas)
-      .where(eq(blogIdeas.status, "active"))
-      .orderBy(desc(blogIdeas.generatedAt))
-      .limit(3);
+    // 1. Mark all existing active ideas as dismissed
+    await db
+      .update(blogIdeas)
+      .set({ status: "dismissed" })
+      .where(eq(blogIdeas.status, "active"));
 
-    // 2. If we have 3+ active ideas, return them
-    if (activeIdeas.length >= 3) {
-      return NextResponse.json({
-        ideas: activeIdeas.map((idea) => ({
-          id: idea.id,
-          title: idea.title,
-          hook: idea.hook,
-          keywords: JSON.parse(idea.keywords),
-          type: idea.type,
-          seasonalRelevance: idea.seasonalRelevance,
-          generatedAt: idea.generatedAt,
-        })),
-        source: "database",
-      });
-    }
-
-    // 3. If fewer than 3 active ideas, generate new ones
+    // 2. Generate 3 fresh ideas using AI
     const newIdeas = await generateBlogIdeas();
 
-    // 4. Save new ideas to database
+    // 3. Save new ideas to database
     const savedIdeas = [];
     for (const idea of newIdeas) {
       const id = crypto.randomUUID();
@@ -200,18 +182,18 @@ export async function GET() {
       });
     }
 
-    // 5. Return generated ideas
+    // 4. Return the new ideas
     return NextResponse.json({
       ideas: savedIdeas,
-      source: "generated",
       generatedAt: new Date().toISOString(),
+      message: "Blog ideas refreshed successfully",
     });
 
   } catch (error) {
-    console.error("Blog ideas retrieval error:", error);
+    console.error("Blog ideas refresh error:", error);
     return NextResponse.json(
       {
-        error: "Failed to retrieve blog ideas",
+        error: "Failed to refresh blog ideas",
         message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

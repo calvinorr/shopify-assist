@@ -17,8 +17,6 @@ interface IdeasPanelProps {
   className?: string;
 }
 
-const STORAGE_KEY = "shopify-assist-blog-ideas";
-
 export function IdeasPanel({ className }: IdeasPanelProps) {
   const router = useRouter();
   const [ideas, setIdeas] = useState<BlogIdea[]>([]);
@@ -27,30 +25,10 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
 
-  // Load ideas from localStorage on mount
+  // Load ideas from API on mount
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setIdeas(parsed);
-      } catch (err) {
-        console.error("Failed to parse stored ideas:", err);
-      }
-    } else {
-      // If no cached ideas, auto-fetch on mount
-      fetchIdeas();
-    }
+    fetchIdeas();
   }, []);
-
-  // Save ideas to localStorage whenever they change
-  useEffect(() => {
-    if (ideas.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(ideas));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [ideas]);
 
   const fetchIdeas = async () => {
     const isRefresh = ideas.length > 0;
@@ -62,7 +40,12 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
     setError(null);
 
     try {
-      const response = await fetch("/api/blog/ideas");
+      // Initial load: GET /api/blog/ideas
+      // Refresh: POST /api/blog/ideas/refresh
+      const endpoint = isRefresh ? "/api/blog/ideas/refresh" : "/api/blog/ideas";
+      const method = isRefresh ? "POST" : "GET";
+
+      const response = await fetch(endpoint, { method });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -104,6 +87,16 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
 
       const data = await response.json();
 
+      // Mark idea as used in the database
+      await fetch(`/api/blog/ideas/${idea.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "used",
+          createdPostId: data.postId,
+        }),
+      });
+
       // Remove the used idea from the list
       setIdeas((prev) => prev.filter((i) => i.id !== idea.id));
 
@@ -116,8 +109,21 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
     }
   };
 
-  const handleDismiss = (ideaId: string) => {
-    setIdeas((prev) => prev.filter((i) => i.id !== ideaId));
+  const handleDismiss = async (ideaId: string) => {
+    try {
+      // Mark idea as dismissed in the database
+      await fetch(`/api/blog/ideas/${ideaId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "dismissed" }),
+      });
+
+      // Remove from local state
+      setIdeas((prev) => prev.filter((i) => i.id !== ideaId));
+    } catch (err) {
+      console.error("Failed to dismiss idea:", err);
+      setError(err instanceof Error ? err.message : "Failed to dismiss idea");
+    }
   };
 
   // Loading State
@@ -223,9 +229,9 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
         </div>
       )}
 
-      {/* Ideas Grid - 2 columns on mobile, horizontal scroll on larger screens */}
-      <div className="grid grid-cols-2 md:flex md:overflow-x-auto gap-4 pb-2">
-        {ideas.map((idea) => (
+      {/* Ideas Grid - 3 cards with uniform height */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {ideas.slice(0, 3).map((idea) => (
           <IdeaCard
             key={idea.id}
             idea={idea}
@@ -249,7 +255,7 @@ interface IdeaCardProps {
 function IdeaCard({ idea, onStart, onDismiss, isStarting }: IdeaCardProps) {
   return (
     <div
-      className="relative rounded-xl p-5 transition-all duration-200 hover:shadow-lg flex-shrink-0 w-full md:w-80"
+      className="relative flex flex-col h-[280px] rounded-xl p-4 transition-all duration-200 hover:shadow-lg"
       style={{
         backgroundColor: "var(--card-bg)",
         border: "1px solid var(--card-border)",
@@ -277,94 +283,81 @@ function IdeaCard({ idea, onStart, onDismiss, isStarting }: IdeaCardProps) {
       </button>
 
       {/* Type Badge */}
-      <div className="mb-3">
-        <span
-          className="inline-block px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide"
-          style={{
-            backgroundColor: "var(--indigo-light)",
-            color: "var(--indigo)",
-          }}
-        >
-          {idea.type}
-        </span>
-      </div>
+      <span
+        className="inline-block px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide self-start"
+        style={{
+          backgroundColor: "var(--indigo-light)",
+          color: "var(--indigo)",
+        }}
+      >
+        {idea.type}
+      </span>
 
-      {/* Title */}
+      {/* Title - 2 lines max */}
       <h3
-        className="text-lg font-bold mb-2 leading-tight pr-6"
+        className="text-lg font-semibold line-clamp-2 mt-2 pr-6"
         style={{ color: "var(--text-primary)" }}
       >
         {idea.title}
       </h3>
 
-      {/* Hook */}
+      {/* Hook - 2 lines max, flex-1 to fill space */}
       <p
-        className="text-sm mb-4 leading-relaxed line-clamp-2"
+        className="text-sm line-clamp-2 mt-1 flex-1"
         style={{ color: "var(--text-secondary)" }}
       >
         {idea.hook}
       </p>
 
-      {/* Keywords */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {idea.keywords.slice(0, 3).map((keyword, index) => (
-          <span
-            key={index}
-            className="px-2.5 py-1 rounded-full text-xs font-medium"
-            style={{
-              backgroundColor: "var(--weld-light)",
-              color: "var(--walnut)",
-            }}
-          >
-            {keyword}
-          </span>
-        ))}
-        {idea.keywords.length > 3 && (
-          <span
-            className="px-2.5 py-1 rounded-full text-xs font-medium"
-            style={{
-              backgroundColor: "var(--background)",
-              color: "var(--text-muted)",
-            }}
-          >
-            +{idea.keywords.length - 3}
-          </span>
-        )}
+      {/* Keywords + Button pinned to bottom */}
+      <div className="mt-auto pt-3 space-y-3">
+        <div className="flex flex-wrap gap-1">
+          {idea.keywords.slice(0, 3).map((keyword, index) => (
+            <span
+              key={index}
+              className="px-2 py-0.5 rounded text-xs font-medium"
+              style={{
+                backgroundColor: "var(--weld-light)",
+                color: "var(--walnut)",
+              }}
+            >
+              {keyword}
+            </span>
+          ))}
+        </div>
+        <Button
+          onClick={() => onStart(idea)}
+          size="md"
+          className="w-full"
+          disabled={isStarting}
+          style={{
+            backgroundColor: isStarting ? "#9ca3af" : "var(--madder)",
+            color: "white",
+          }}
+          onMouseEnter={(e) => {
+            if (!isStarting) {
+              e.currentTarget.style.backgroundColor = "#a14d2d";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isStarting) {
+              e.currentTarget.style.backgroundColor = "var(--madder)";
+            }
+          }}
+        >
+          {isStarting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating Draft...
+            </>
+          ) : (
+            <>
+              Start This Post
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </>
+          )}
+        </Button>
       </div>
-
-      {/* Start Button */}
-      <Button
-        onClick={() => onStart(idea)}
-        size="md"
-        className="w-full"
-        disabled={isStarting}
-        style={{
-          backgroundColor: isStarting ? "#9ca3af" : "var(--madder)",
-          color: "white",
-        }}
-        onMouseEnter={(e) => {
-          if (!isStarting) {
-            e.currentTarget.style.backgroundColor = "#a14d2d";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isStarting) {
-            e.currentTarget.style.backgroundColor = "var(--madder)";
-          }
-        }}
-      >
-        {isStarting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Creating Draft...
-          </>
-        ) : (
-          <>
-            Start This Post
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </>
-        )}
-      </Button>
     </div>
   );
 }

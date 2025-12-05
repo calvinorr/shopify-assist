@@ -66,6 +66,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 - [x] **Caption Generator** (P2) - Modal with 3 captions + categorized hashtags - 2024-12-03
 - [x] **Blog AI Enhancements** (P2) - Generate excerpt + suggest tags buttons - 2024-12-03
 - [x] **Blog Command Center** (P0) - Full blog management with calendar, scheduling, SEO scoring - 2024-12-04
+- [x] **Blog Post UX Design** (P1) - DB-backed ideas, 3-card grid, SEO panel with hints - 2024-12-05
 
 ## Notes
 - Use `/manage` to work through stories

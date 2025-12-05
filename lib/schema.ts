@@ -98,3 +98,17 @@ export const aiSuggestions = sqliteTable("ai_suggestions", {
   used: integer("used", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
+
+// Blog ideas (persisted AI-generated topic suggestions)
+export const blogIdeas = sqliteTable("blog_ideas", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  hook: text("hook").notNull(),
+  keywords: text("keywords").notNull(), // JSON array
+  type: text("type").notNull(), // how-to, guide, story, seasonal, product-spotlight
+  seasonalRelevance: text("seasonal_relevance"),
+  status: text("status").$type<"active" | "used" | "dismissed">().default("active"),
+  generatedAt: integer("generated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  usedAt: integer("used_at", { mode: "timestamp" }),
+  createdPostId: text("created_post_id").references(() => blogPosts.id), // Links to blog post if used
+});

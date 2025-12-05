@@ -2,10 +2,12 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import type { Editor } from "@tiptap/react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
+import { SEOPanel } from "@/components/blog";
 import { useToast } from "@/components/ui/toast";
 import { useAutosaveOnChange } from "@/hooks/use-autosave";
 import { Save, ArrowLeft, Trash2, Loader2, Eye, Edit3, Copy, Sparkles, Calendar, X } from "lucide-react";
@@ -44,6 +46,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const [isGeneratingExcerpt, setIsGeneratingExcerpt] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
 
   const handleExportHTML = async () => {
     try {
@@ -408,6 +411,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                   <TiptapEditor
                     content={content}
                     onChange={setContent}
+                    onEditorReady={setEditor}
                     placeholder="Start writing your blog post..."
                   />
                 </div>
@@ -575,19 +579,32 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                   )}
                 </Button>
               </div>
-              <textarea
-                id="excerpt"
-                rows={3}
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                placeholder="Brief summary..."
-                className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all"
-                style={{
-                  borderColor: "var(--card-border)",
-                  backgroundColor: "var(--background)",
-                  color: "var(--text-primary)",
-                }}
-              />
+              <div className="space-y-1">
+                <textarea
+                  id="excerpt"
+                  rows={5}
+                  value={excerpt}
+                  onChange={(e) => setExcerpt(e.target.value)}
+                  placeholder="Brief description for search results..."
+                  className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all resize-y min-h-[100px] max-h-[200px]"
+                  style={{
+                    borderColor: "var(--card-border)",
+                    backgroundColor: "var(--background)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+                <div className="flex justify-end">
+                  <span
+                    className="text-xs"
+                    style={{
+                      color: excerpt.length > 160 ? "var(--danger)" :
+                             excerpt.length >= 150 ? "var(--success)" : "var(--text-muted)"
+                    }}
+                  >
+                    {excerpt.length}/160
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Tags */}
@@ -637,6 +654,14 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
                 }}
               />
             </div>
+
+            {/* SEO Panel */}
+            <SEOPanel
+              title={title}
+              metaDescription={excerpt}
+              focusKeyword={tags.split(",")[0]?.trim() || ""}
+              contentHtml={editor?.getHTML() || ""}
+            />
           </CardContent>
         </Card>
       </div>
