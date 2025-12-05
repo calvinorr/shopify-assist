@@ -46,8 +46,10 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
 | **Blog Command Center** | **P0** | complete | `stories/blog-command-center.md` |
+| **Blog Post UX Design** | **P1** | complete | `stories/blog-post-ux-design.md` |
+| Blog Polish & Refinements | P1 | not-started | `stories/blog-polish.md` |
 
-*Note: Blog Command Center supersedes the originally planned AI Blog Topic Suggestions, Blog Post Scaffolding, and Enhanced Blog Editor stories - combining them into one comprehensive feature.*
+*Progress: ~80% complete. Core features done. Remaining: polish, edge cases, and minor UX refinements.*
 
 ### Phase 4: Analytics Loop
 
