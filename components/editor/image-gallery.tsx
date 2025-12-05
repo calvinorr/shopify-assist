@@ -44,7 +44,7 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/products");
+      const response = await fetch("/api/products?limit=100");
       if (response.ok) {
         const data = await response.json();
         setProducts(data.products || []);

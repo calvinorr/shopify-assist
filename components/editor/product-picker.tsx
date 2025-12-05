@@ -31,10 +31,10 @@ export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps)
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch("/api/products");
+      const response = await fetch("/api/products?limit=100");
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
-      setProducts(data);
+      setProducts(data.products || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load products");
     } finally {
