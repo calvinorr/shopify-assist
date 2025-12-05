@@ -1,7 +1,7 @@
 # Story: Blog Polish & Refinements
 
 **Epic:** See `.claude/epic.md`
-**Status:** not-started
+**Status:** in-progress
 **Priority:** P1
 **Created:** 2024-12-05
 **Updated:** 2024-12-05
@@ -20,11 +20,11 @@ Blog posting is currently ~80% complete. Core features are working:
 ## New Features
 
 ### Product Linking in Blog Editor
-- [ ] Create product picker modal (searchable list of synced products)
-- [ ] Add "Insert Product" button to TipTap toolbar
-- [ ] Create TipTap custom node for product cards (image + name + price + link)
+- [x] Create product picker modal (searchable list of synced products)
+- [x] Add "Insert Product" button to TipTap toolbar
+- [x] Create TipTap custom node for product cards (image + name + price + link)
 - [ ] Wire up `shopifyProductLinks` field to track linked products
-- [ ] Products display as styled cards in editor and preview
+- [x] Products display as styled cards in editor and preview
 
 **Technical Notes:**
 - Products already synced to DB via `services/shopify.ts`
@@ -32,10 +32,10 @@ Blog posting is currently ~80% complete. Core features are working:
 - Use Shopify `read_products` scope (already configured)
 
 ### Image Integration from Shopify
-- [ ] Add "Browse Product Images" to image insert flow
-- [ ] Create image gallery modal showing products with their images
-- [ ] Allow selecting images from any synced product
-- [ ] Images insert directly into editor (no copy/paste needed)
+- [x] Add "Browse Product Images" to image insert flow
+- [x] Create image gallery modal showing products with their images
+- [x] Allow selecting images from any synced product
+- [x] Images insert directly into editor (no copy/paste needed)
 
 **Shopify API Research:**
 - Images fetched via GraphQL Admin API (already doing this)
@@ -45,10 +45,10 @@ Blog posting is currently ~80% complete. Core features are working:
 - See: [Shopify Product Media Docs](https://shopify.dev/docs/apps/build/online-store/product-media)
 
 ### App Branding
-- [ ] Create custom favicon (yarn/wool themed icon)
-- [ ] Update app title from "Create Next App" → "Herbarium Content Studio"
-- [ ] Update meta description
-- [ ] Consider Open Graph images for link previews
+- [x] Create custom favicon (yarn/wool themed icon)
+- [x] Update app title from "Create Next App" → "Herbarium Content Studio"
+- [x] Update meta description
+- [x] Consider Open Graph images for link previews
 
 **Files to modify:**
 - `app/layout.tsx` - Update metadata
@@ -108,9 +108,9 @@ Blog posting is currently ~80% complete. Core features are working:
 3. Performance review
 
 ## Acceptance Criteria
-- [ ] Users can insert product cards with images, name, price, link
-- [ ] Users can browse and insert product images without copy/paste
-- [ ] App shows custom favicon and proper branding
+- [x] Users can insert product cards with images, name, price, link
+- [x] Users can browse and insert product images without copy/paste
+- [x] App shows custom favicon and proper branding
 - [ ] All blog features work reliably without errors
 - [ ] Mobile experience is usable
 - [ ] SEO panel provides accurate, helpful feedback
