@@ -2,6 +2,7 @@ import { shopifyGraphQL } from "@/lib/shopify";
 import { db } from "@/lib/db";
 import { products } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import type { ShopifyOrder } from "@/types/shopify";
 
 // Known Herbarium color names for extraction
 const KNOWN_COLORS = [
@@ -118,7 +119,17 @@ export function extractColor(title: string, tags: string[]): string | null {
     }
   }
 
-  // Check title for known color names (longest match first)
+  // Extract color from title pattern "Base Yarn - Color Name"
+  // e.g., "Merino DK - Coraline" → "Coraline"
+  // e.g., "Alpaca Silk - Peche Douce" → "Peche Douce"
+  if (title.includes(" - ")) {
+    const parts = title.split(" - ");
+    if (parts.length >= 2) {
+      return parts[parts.length - 1].trim();
+    }
+  }
+
+  // Fallback: Check title for known traditional dye color names
   const sortedColors = [...KNOWN_COLORS].sort((a, b) => b.length - a.length);
   const titleLower = title.toLowerCase();
 
@@ -237,5 +248,101 @@ export async function syncProductsToDb(): Promise<SyncResult> {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return { success: false, synced, errors: [message] };
+  }
+}
+
+// Orders GraphQL types
+interface ShopifyOrderNode {
+  id: string;
+  name: string;
+  createdAt: string;
+  totalPriceSet: {
+    shopMoney: {
+      amount: string;
+      currencyCode: string;
+    };
+  };
+  lineItems: {
+    edges: Array<{
+      node: {
+        quantity: number;
+      };
+    }>;
+  };
+}
+
+interface ShopifyOrdersResponse {
+  orders: {
+    edges: Array<{
+      node: ShopifyOrderNode;
+    }>;
+  };
+}
+
+const ORDERS_QUERY = `
+  query GetOrders($first: Int!, $query: String) {
+    orders(first: $first, query: $query, sortKey: CREATED_AT, reverse: true) {
+      edges {
+        node {
+          id
+          name
+          createdAt
+          totalPriceSet {
+            shopMoney {
+              amount
+              currencyCode
+            }
+          }
+          lineItems(first: 10) {
+            edges {
+              node {
+                quantity
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Fetch recent orders from Shopify
+ * @param days Number of days to look back (default: 30)
+ */
+export async function fetchRecentOrders(days: number = 30): Promise<ShopifyOrder[]> {
+  // Calculate date threshold (e.g., "created_at:>=2025-11-06")
+  const dateThreshold = new Date();
+  dateThreshold.setDate(dateThreshold.getDate() - days);
+  const dateString = dateThreshold.toISOString().split("T")[0]; // YYYY-MM-DD
+
+  const query = `created_at:>=${dateString}`;
+
+  try {
+    const response: ShopifyOrdersResponse = await shopifyGraphQL(ORDERS_QUERY, {
+      first: 250, // Shopify max per request
+      query,
+    });
+
+    // Transform to simple format
+    return response.orders.edges.map(({ node }) => {
+      // Calculate total item count
+      const itemCount = node.lineItems.edges.reduce(
+        (sum, edge) => sum + edge.node.quantity,
+        0
+      );
+
+      return {
+        id: node.id.replace("gid://shopify/Order/", ""),
+        orderNumber: node.name, // e.g., "#1001"
+        date: node.createdAt,
+        total: parseFloat(node.totalPriceSet.shopMoney.amount),
+        currency: node.totalPriceSet.shopMoney.currencyCode,
+        itemCount,
+      };
+    });
+  } catch (err) {
+    console.error("Failed to fetch Shopify orders:", err);
+    throw err;
   }
 }
