@@ -36,7 +36,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
 | Instagram Creation Flow | P0 | complete | `stories/instagram-creation-flow.md` |
-| Instagram OAuth Connection | P1 | not-started | `stories/instagram-oauth.md` |
+| Instagram OAuth Connection | P1 | deferred (pending PM approval) | `stories/instagram-oauth.md` |
 | AI Idea Generation | P1 | complete | `stories/ai-idea-generation.md` |
 | Mobile App (Instagram workaround) | P3 | backlog | `stories/mobile-app.md` |
 | Caption Generator | P2 | complete | `stories/caption-generator.md` |
@@ -65,6 +65,14 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Design System Standardization | P1 | complete | `stories/ux-design-system.md` |
 | Loading States & Progress | P2 | complete | `stories/ux-loading-states.md` |
 | Dashboard Rewrite | P0 | complete | `stories/ux-dashboard-rewrite.md` |
+
+### Phase 6: Production Readiness - IN PROGRESS
+
+| Story | Priority | Status | File |
+|-------|----------|--------|------|
+| Production Readiness | P0 | not-started | `stories/production-readiness.md` |
+
+**Branch:** `feature/production-readiness`
 
 ## Completed Stories (Chronological)
 - [x] **Shopify Product Sync** (P0) - 298 products synced - 2024-12-02
