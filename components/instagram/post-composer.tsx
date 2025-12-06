@@ -171,7 +171,7 @@ export function PostComposer({
   };
 
   return (
-    <div className="space-y-6">
+    <>
       {/* Product Image Picker Modal */}
       {showImagePicker && (
         <ProductImagePicker
@@ -181,228 +181,259 @@ export function PostComposer({
         />
       )}
 
-      {/* Image Preview */}
-      <Card className="overflow-hidden">
-        <div
-          className="aspect-square flex items-center justify-center relative"
-          style={{ backgroundColor: "var(--background)" }}
-        >
-          {imageUrl ? (
-            <>
-              <img
-                src={imageUrl}
-                alt="Post preview"
-                className="w-full h-full object-cover"
-              />
-              {/* Selected product badge */}
-              {selectedProduct && (
-                <div
-                  className="absolute bottom-3 left-3 right-3 px-3 py-2 rounded-lg flex items-center gap-2"
-                  style={{
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    backdropFilter: "blur(4px)",
-                  }}
-                >
-                  <Package className="h-4 w-4 text-white flex-shrink-0" />
-                  <span className="text-white text-sm font-medium truncate">
-                    {selectedProduct.name}
-                  </span>
-                  {selectedProduct.color && (
-                    <Badge variant="muted" size="sm">
-                      {selectedProduct.color}
-                    </Badge>
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* LEFT COLUMN: Image Preview */}
+        <div className="space-y-4">
+          <Card className="overflow-hidden">
+            <div
+              className="flex items-center justify-center relative h-80"
+              style={{ backgroundColor: "var(--background)" }}
+            >
+              {imageUrl ? (
+                <>
+                  <img
+                    src={imageUrl}
+                    alt="Post preview"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Selected product badge */}
+                  {selectedProduct && (
+                    <div
+                      className="absolute bottom-3 left-3 right-3 px-3 py-2 rounded-lg flex items-center gap-2"
+                      style={{
+                        backgroundColor: "rgba(0, 0, 0, 0.7)",
+                        backdropFilter: "blur(4px)",
+                      }}
+                    >
+                      <Package className="h-4 w-4 text-white flex-shrink-0" />
+                      <span className="text-white text-sm font-medium truncate">
+                        {selectedProduct.name}
+                      </span>
+                      {selectedProduct.color && (
+                        <Badge variant="muted" size="sm">
+                          {selectedProduct.color}
+                        </Badge>
+                      )}
+                    </div>
                   )}
+                  {/* Change image button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-3 right-3"
+                    onClick={() => setShowImagePicker(true)}
+                    style={{
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    }}
+                  >
+                    Change
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center p-8">
+                  <ImageIcon
+                    className="h-16 w-16 mx-auto mb-4"
+                    style={{ color: "var(--text-muted)" }}
+                  />
+                  <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+                    Select an image from your products
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() => setShowImagePicker(true)}
+                    style={{ backgroundColor: "var(--indigo)" }}
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    Browse Products
+                  </Button>
                 </div>
               )}
-              {/* Change image button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute top-3 right-3"
-                onClick={() => setShowImagePicker(true)}
-                style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.9)",
-                }}
-              >
-                Change
-              </Button>
-            </>
-          ) : (
-            <div className="text-center p-8">
-              <ImageIcon
-                className="h-16 w-16 mx-auto mb-4"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-                Select an image from your products
-              </p>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => setShowImagePicker(true)}
-                style={{ backgroundColor: "var(--indigo)" }}
-              >
-                <Package className="h-4 w-4 mr-2" />
-                Browse Products
-              </Button>
+            </div>
+          </Card>
+
+          {/* Product info below image */}
+          {selectedProduct && (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4" style={{ color: "var(--text-muted)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                  {selectedProduct.name}
+                </span>
+              </div>
+              {selectedProduct.color && (
+                <div className="flex items-center gap-2 pl-6">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    Color:
+                  </span>
+                  <Badge variant="muted" size="sm">
+                    {selectedProduct.color}
+                  </Badge>
+                </div>
+              )}
             </div>
           )}
         </div>
-      </Card>
 
-      {/* Caption */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label
-            className="text-sm font-medium"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Caption
-          </label>
-          <span
-            className="text-xs"
-            style={{ color: isOverLimit ? "var(--danger)" : "var(--text-muted)" }}
-          >
-            {characterCount}/{CAPTION_MAX_LENGTH}
-          </span>
-        </div>
-        <Textarea
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Write your caption..."
-          rows={6}
-          error={isOverLimit}
-        />
-        <div className="flex gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGenerateCaption}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4 mr-2" />
-            )}
-            {isGenerating ? "Generating..." : "Generate with AI"}
-          </Button>
+        {/* RIGHT COLUMN: Caption & Hashtags */}
+        <div className="space-y-4">
+          {/* Caption */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label
+                className="text-sm font-medium"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Caption
+              </label>
+              <span
+                className="text-xs"
+                style={{ color: isOverLimit ? "var(--danger)" : "var(--text-muted)" }}
+              >
+                {characterCount}/{CAPTION_MAX_LENGTH}
+              </span>
+            </div>
+            <Textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Write your caption..."
+              rows={4}
+              error={isOverLimit}
+            />
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateCaption}
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                {isGenerating ? "Generating..." : "Generate AI"}
+              </Button>
 
-          {selectedProduct && caption.trim() && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefineCaption}
-              disabled={isRefining}
-            >
-              {isRefining ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Wand2 className="h-4 w-4 mr-2" />
+              {selectedProduct && caption.trim() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefineCaption}
+                  disabled={isRefining}
+                >
+                  {isRefining ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-4 w-4 mr-2" />
+                  )}
+                  {isRefining ? "Refining..." : "Refine"}
+                </Button>
               )}
-              {isRefining ? "Refining..." : `Refine for ${selectedProduct.name.split(" ").slice(0, 2).join(" ")}`}
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Selected Hashtags */}
-      {hashtags.length > 0 && (
-        <div>
-          <label
-            className="text-sm font-medium mb-2 block"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Selected Hashtags ({hashtags.length})
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {hashtags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="indigo"
-                className="cursor-pointer"
-                onClick={() => removeHashtag(tag)}
-              >
-                {tag}
-                <X className="h-3 w-3 ml-1" />
-              </Badge>
-            ))}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Hashtag Suggestions */}
-      <div>
-        <label
-          className="text-sm font-medium mb-3 block flex items-center gap-2"
-          style={{ color: "var(--text-primary)" }}
-        >
-          <Hash className="h-4 w-4" />
-          Suggested Hashtags
-        </label>
-        <div className="space-y-3">
-          {Object.entries(HASHTAG_CATEGORIES).map(([category, tags]) => (
-            <div key={category}>
-              <p
-                className="text-xs uppercase tracking-wide mb-1.5"
-                style={{ color: "var(--text-muted)" }}
+          {/* Selected Hashtags */}
+          {hashtags.length > 0 && (
+            <div>
+              <label
+                className="text-sm font-medium mb-2 block"
+                style={{ color: "var(--text-primary)" }}
               >
-                {category}
-              </p>
+                Selected Hashtags ({hashtags.length})
+              </label>
               <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
+                {hashtags.map((tag) => (
                   <Badge
                     key={tag}
-                    variant={hashtags.includes(tag) ? "indigo" : "muted"}
+                    variant="indigo"
                     size="sm"
                     className="cursor-pointer"
-                    onClick={() => toggleHashtag(tag)}
+                    onClick={() => removeHashtag(tag)}
                   >
                     {tag}
+                    <X className="h-3 w-3 ml-1" />
                   </Badge>
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div
-        className="flex items-center justify-between pt-4 border-t"
-        style={{ borderColor: "var(--card-border)" }}
-      >
-        <Button variant="outline" size="md" onClick={handleCopyToClipboard}>
-          {copied ? (
-            <Check className="h-4 w-4 mr-2" style={{ color: "var(--success)" }} />
-          ) : (
-            <Copy className="h-4 w-4 mr-2" />
           )}
-          {copied ? "Copied!" : "Copy to Clipboard"}
-        </Button>
 
-        <div className="flex gap-2">
-          {onCancel && (
-            <Button variant="ghost" size="md" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
-          <Button
-            variant="primary"
-            size="md"
-            onClick={handleSave}
-            disabled={isSaving || isOverLimit}
-            style={{ backgroundColor: "var(--indigo)" }}
+          {/* Hashtag Suggestions - Compact */}
+          <div>
+            <label
+              className="text-sm font-medium mb-2 block flex items-center gap-2"
+              style={{ color: "var(--text-primary)" }}
+            >
+              <Hash className="h-4 w-4" />
+              Suggested Hashtags
+            </label>
+            <div className="space-y-2">
+              {Object.entries(HASHTAG_CATEGORIES).map(([category, tags]) => (
+                <div key={category} className="flex items-start gap-2">
+                  <span
+                    className="text-xs uppercase tracking-wide pt-1 w-20 flex-shrink-0"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {category}:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant={hashtags.includes(tag) ? "indigo" : "muted"}
+                        size="sm"
+                        className="cursor-pointer"
+                        onClick={() => toggleHashtag(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div
+            className="flex items-center justify-between pt-4 border-t"
+            style={{ borderColor: "var(--card-border)" }}
           >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            {isSaving ? "Saving..." : postId ? "Update Draft" : "Save Draft"}
-          </Button>
+            <Button variant="outline" size="md" onClick={handleCopyToClipboard}>
+              {copied ? (
+                <Check className="h-4 w-4 mr-2" style={{ color: "var(--success)" }} />
+              ) : (
+                <Copy className="h-4 w-4 mr-2" />
+              )}
+              {copied ? "Copied!" : "Copy to Clipboard"}
+            </Button>
+
+            <div className="flex gap-2">
+              {onCancel && (
+                <Button variant="ghost" size="md" onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleSave}
+                disabled={isSaving || isOverLimit}
+                style={{ backgroundColor: "var(--indigo)" }}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {isSaving ? "Saving..." : postId ? "Update Draft" : "Save Draft"}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

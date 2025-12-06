@@ -3,18 +3,12 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PostComposer } from "@/components/instagram/post-composer";
 import { DraftsList } from "@/components/instagram/drafts-list";
-import {
-  Instagram,
-  Plus,
-  Link as LinkIcon,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 
 interface InstagramPost {
   id: string;
@@ -157,10 +151,27 @@ function InstagramContent() {
   return (
     <>
       <Header
-        title="Instagram"
-        description="Create and manage your Instagram content"
+        title={showComposer ? (editingPost ? "Edit Post" : "Create Post") : "Instagram"}
+        description={
+          showComposer ? undefined : (
+            <div className="flex items-center gap-2">
+              <span>Create and manage your Instagram content</span>
+              <Badge variant={isConnected ? "success" : "warning"} className="text-xs">
+                {isConnected ? "Connected" : "Not Connected"}
+              </Badge>
+            </div>
+          )
+        }
       >
-        {!showComposer && (
+        {showComposer ? (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={handleCancelComposer}
+          >
+            Cancel
+          </Button>
+        ) : (
           <Button
             variant="primary"
             size="md"
@@ -173,106 +184,19 @@ function InstagramContent() {
         )}
       </Header>
 
-      <div className="p-6" style={{ backgroundColor: "var(--background)" }}>
-        {/* Connection Status Banner */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-lg"
-                  style={{
-                    backgroundColor: isConnected
-                      ? "var(--success-light)"
-                      : "var(--weld-light)",
-                  }}
-                >
-                  <Instagram
-                    className="h-5 w-5"
-                    style={{
-                      color: isConnected ? "var(--success)" : "var(--weld)",
-                    }}
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3
-                      className="font-medium"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      Instagram Connection
-                    </h3>
-                    <Badge variant={isConnected ? "success" : "warning"}>
-                      {isConnected ? "Connected" : "Not Connected"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                    {isConnected
-                      ? "Your account is connected. Posts can be published directly."
-                      : "Create drafts and copy captions to post manually."}
-                  </p>
-                </div>
-              </div>
-              <Button variant="outline" size="md" disabled={isConnected}>
-                <LinkIcon className="h-4 w-4 mr-2" />
-                Connect Account
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Manual Posting Instructions */}
-        {!isConnected && !showComposer && (
-          <Card className="mb-6" style={{ borderColor: "var(--weld-light)" }}>
-            <CardContent className="p-4">
-              <div className="flex gap-3">
-                <AlertCircle
-                  className="h-5 w-5 flex-shrink-0 mt-0.5"
-                  style={{ color: "var(--weld)" }}
-                />
-                <div>
-                  <h4
-                    className="font-medium mb-1"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    Manual Posting Workflow
-                  </h4>
-                  <ol
-                    className="text-sm space-y-1"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    <li>1. Create your post with AI-generated captions</li>
-                    <li>2. Click &quot;Copy to Clipboard&quot; to copy caption + hashtags</li>
-                    <li>3. Open Instagram and create a new post</li>
-                    <li>4. Paste your caption and publish</li>
-                    <li>5. Mark as &quot;Posted&quot; here to track it</li>
-                  </ol>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
+      <div className="p-6 h-[calc(100vh-5rem)] overflow-auto" style={{ backgroundColor: "var(--background)" }}>
         {/* Main Content */}
         {showComposer ? (
-          <div className="max-w-2xl">
-            <Card className="p-6">
-              <h2
-                className="text-lg font-semibold mb-6"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {editingPost ? "Edit Post" : "Create New Post"}
-              </h2>
-              <PostComposer
-                initialCaption={editingPost?.caption || initialCaption}
-                initialHashtags={editingPost?.hashtags}
-                initialImageUrl={editingPost?.imageUrls?.[0]}
-                postId={editingPost?.id}
-                onSave={handleSavePost}
-                onCancel={handleCancelComposer}
-              />
-            </Card>
-          </div>
+          <Card className="p-6">
+            <PostComposer
+              initialCaption={editingPost?.caption || initialCaption}
+              initialHashtags={editingPost?.hashtags}
+              initialImageUrl={editingPost?.imageUrls?.[0]}
+              postId={editingPost?.id}
+              onSave={handleSavePost}
+              onCancel={handleCancelComposer}
+            />
+          </Card>
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Drafts */}

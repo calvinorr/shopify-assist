@@ -72,15 +72,14 @@ export function DraftsList({
 }: DraftsListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-4">
-            <div className="flex gap-4">
-              <Skeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
+          <Card key={i} className="p-3">
+            <div className="flex gap-3">
+              <Skeleton className="w-12 h-12 rounded-lg flex-shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-3/4" />
                 <Skeleton className="h-3 w-1/2" />
-                <Skeleton className="h-3 w-1/4" />
               </div>
             </div>
           </Card>
@@ -115,20 +114,21 @@ export function DraftsList({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {posts.map((post) => {
         const statusConfig = getStatusConfig(post.status);
         const StatusIcon = statusConfig.icon;
+        const isPosted = post.status === "posted";
 
         return (
           <Card
             key={post.id}
-            className="p-4 hover:shadow-md transition-shadow"
+            className="p-3 hover:shadow-md transition-shadow"
           >
-            <div className="flex gap-4">
+            <div className="flex gap-3 items-start">
               {/* Thumbnail */}
               <div
-                className="w-16 h-16 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
+                className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden"
                 style={{ backgroundColor: "var(--background)" }}
               >
                 {post.imageUrls[0] ? (
@@ -139,7 +139,7 @@ export function DraftsList({
                   />
                 ) : (
                   <ImageIcon
-                    className="h-6 w-6"
+                    className="h-5 w-5"
                     style={{ color: "var(--text-muted)" }}
                   />
                 )}
@@ -147,78 +147,80 @@ export function DraftsList({
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-2 mb-1">
                   <p
-                    className="text-sm line-clamp-2"
+                    className="text-sm truncate flex-1"
                     style={{ color: "var(--text-primary)" }}
                   >
                     {post.caption || "No caption"}
                   </p>
-                  <Badge variant={statusConfig.variant} size="sm">
+                  <Badge variant={statusConfig.variant} size="sm" className="flex-shrink-0">
                     <StatusIcon className="h-3 w-3 mr-1" />
                     {statusConfig.label}
                   </Badge>
                 </div>
 
-                <div className="flex items-center gap-3 mt-2">
-                  <span
-                    className="text-xs"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {formatDate(post.updatedAt)}
+                <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                  <span>
+                    {isPosted && post.postedTime
+                      ? `Posted ${formatDate(post.postedTime)}`
+                      : formatDate(post.updatedAt)}
                   </span>
                   {post.hashtags.length > 0 && (
-                    <span
-                      className="text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {post.hashtags.length} hashtags
-                    </span>
+                    <>
+                      <span>·</span>
+                      <span>{post.hashtags.length} hashtags</span>
+                    </>
                   )}
                 </div>
+              </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-2 mt-3">
-                  {onEdit && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(post)}
-                    >
-                      <Edit className="h-3.5 w-3.5 mr-1" />
-                      Edit
-                    </Button>
-                  )}
+              {/* Actions */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {!isPosted && onEdit && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleCopyCaption(post)}
+                    onClick={() => onEdit(post)}
+                    className="h-8 w-8 p-0"
+                    title="Edit"
                   >
-                    <Copy className="h-3.5 w-3.5 mr-1" />
-                    Copy
+                    <Edit className="h-3.5 w-3.5" />
                   </Button>
-                  {post.status === "draft" && onMarkPosted && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onMarkPosted(post.id)}
-                      style={{ color: "var(--success)" }}
-                    >
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                      Mark Posted
-                    </Button>
-                  )}
-                  {onDelete && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDelete(post.id)}
-                      style={{ color: "var(--danger)" }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopyCaption(post)}
+                  className="h-8 w-8 p-0"
+                  title="Copy caption"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                {post.status === "draft" && onMarkPosted && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onMarkPosted(post.id)}
+                    className="h-8 w-8 p-0"
+                    style={{ color: "var(--success)" }}
+                    title="Mark as posted"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                {!isPosted && onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(post.id)}
+                    className="h-8 w-8 p-0"
+                    style={{ color: "var(--danger)" }}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           </Card>
