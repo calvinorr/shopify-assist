@@ -13,6 +13,7 @@ import { useAutosaveOnChange } from "@/hooks/use-autosave";
 import { Save, ArrowLeft, Eye, Edit3, Copy, Sparkles, Loader2, Calendar, X } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow, addDays, addWeeks, setHours, setMinutes, startOfWeek, isPast } from "date-fns";
+import DOMPurify from "dompurify";
 
 export default function NewBlogPostPage() {
   return (
@@ -338,7 +339,7 @@ function NewBlogPostContent() {
                 <div
                   className="prose prose-slate max-w-none"
                   style={{ color: "var(--text-primary)" }}
-                  dangerouslySetInnerHTML={{ __html: content || "<p>No content yet...</p>" }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content || "<p>No content yet...</p>") }}
                 />
               </div>
             ) : (

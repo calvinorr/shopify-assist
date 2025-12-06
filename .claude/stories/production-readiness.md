@@ -1,7 +1,7 @@
 # Story: Production Readiness
 
 **Epic:** See `.claude/epic.md`
-**Status:** not-started
+**Status:** in-progress
 **Priority:** P0
 **Created:** 2024-12-06
 **Updated:** 2024-12-06 10:45

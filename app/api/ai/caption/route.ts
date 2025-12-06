@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCaptions, generateHashtags } from "@/lib/gemini";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
     // Parse request body
     const body = await req.json();
     const { ideaTitle, ideaDescription, productName, color } = body;
@@ -40,6 +42,9 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Error generating caption:", error);
 
     // Return fallback content on error

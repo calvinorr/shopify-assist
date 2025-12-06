@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { blogPosts, blogIdeas } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 // GET /api/blog/[id] - Get single blog post
 export async function GET(
@@ -9,6 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAuth();
     const { id } = await params;
 
     const posts = await db
@@ -27,6 +29,9 @@ export async function GET(
       focusKeywords: post.focusKeywords ? JSON.parse(post.focusKeywords) : [],
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -38,6 +43,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAuth();
     const { id } = await params;
     const body = await request.json();
     const { title, content, excerpt, tags, status, scheduledAt } = body;
@@ -69,6 +75,9 @@ export async function PUT(
 
     return NextResponse.json({ message: "Post updated successfully" });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -80,6 +89,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAuth();
     const { id } = await params;
 
     // First, clear any foreign key references from blogIdeas
@@ -93,6 +103,9 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Post deleted successfully" });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/gemini";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth();
     const { action, title, content } = await request.json();
 
     if (!action || !content) {
@@ -64,6 +66,9 @@ Example: indigo dyeing, natural dyes, hand-dyed yarn, wool fiber, botanical colo
 
     return NextResponse.json({ result });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("AI blog generation error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to generate content" },

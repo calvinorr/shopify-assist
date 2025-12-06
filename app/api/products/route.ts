@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/schema";
 import { sql } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAuth();
     const searchParams = request.nextUrl.searchParams;
     const limit = Math.min(parseInt(searchParams.get("limit") ?? "20"), 100);
     const offset = parseInt(searchParams.get("offset") ?? "0");
@@ -64,6 +66,9 @@ export async function GET(request: NextRequest) {
       offset,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

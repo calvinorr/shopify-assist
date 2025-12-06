@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { products } from "@/lib/schema";
 import { sql } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET() {
   try {
+    await requireAuth();
     // Get total products and inventory
     const totals = await db
       .select({
@@ -52,6 +54,9 @@ export async function GET() {
       recentProducts: recentWithParsedImages,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

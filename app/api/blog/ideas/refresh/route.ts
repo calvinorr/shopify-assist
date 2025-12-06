@@ -3,6 +3,7 @@ import { generateContent } from "@/lib/gemini";
 import { db } from "@/lib/db";
 import { products, blogIdeas } from "@/lib/schema";
 import { desc, sql, eq } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 /**
  * Determine the current season based on the month
@@ -153,6 +154,7 @@ IMPORTANT: Return ONLY valid JSON. No markdown formatting, no code blocks, just 
  */
 export async function POST() {
   try {
+    await requireAuth();
     // 1. Mark all existing active ideas as dismissed
     await db
       .update(blogIdeas)
@@ -190,6 +192,9 @@ export async function POST() {
     });
 
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Blog ideas refresh error:", error);
     return NextResponse.json(
       {

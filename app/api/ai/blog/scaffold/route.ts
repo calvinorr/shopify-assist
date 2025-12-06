@@ -3,9 +3,11 @@ import { generateContent } from "@/lib/gemini";
 import { db } from "@/lib/db";
 import { blogPosts, products } from "@/lib/schema";
 import { desc } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth();
     const { title, description, suggestedKeywords } = await request.json();
 
     if (!title) {
@@ -102,6 +104,9 @@ Return ONLY the HTML content, no markdown, no code blocks.`;
       contentPreview: cleanedHtml.substring(0, 200) + "...",
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Blog scaffold generation error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to generate blog scaffold" },

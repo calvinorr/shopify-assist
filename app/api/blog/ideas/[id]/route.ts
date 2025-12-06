@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { blogIdeas } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 /**
  * Update a blog idea's status
@@ -12,6 +13,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireAuth();
     const { id } = await params;
     const body = await request.json();
 
@@ -92,6 +94,9 @@ export async function PATCH(
     });
 
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Blog idea update error:", error);
     return NextResponse.json(
       {
