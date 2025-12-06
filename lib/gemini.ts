@@ -170,6 +170,42 @@ Format as JSON:
 }
 
 /**
+ * Refine a caption with product context
+ */
+export async function refineCaption(
+  currentCaption: string,
+  productName: string,
+  productColor?: string | null,
+  productDescription?: string
+): Promise<string> {
+  const systemInstruction = `You are a content editor for Herbarium Dyeworks, an artisan hand-dyed wool business.
+Refine Instagram captions to naturally incorporate product mentions while maintaining the artisan voice.
+Keep the original tone and style, just weave in product details authentically.`;
+
+  const prompt = `Refine this Instagram caption to mention the featured product naturally:
+
+Current caption:
+"${currentCaption}"
+
+Featured product:
+- Name: ${productName}
+${productColor ? `- Color: ${productColor}` : ""}
+${productDescription ? `- Description: ${productDescription}` : ""}
+
+Guidelines:
+- Keep the same length (±20 characters)
+- Maintain the original tone and voice
+- Naturally work in the product name/color
+- Don't add hard-sell language
+- Keep any existing hashtags at the end
+
+Return ONLY the refined caption, nothing else.`;
+
+  const response = await generateContent({ prompt, systemInstruction, maxTokens: 500 });
+  return response.trim().replace(/^["']|["']$/g, ""); // Remove any quotes
+}
+
+/**
  * Generate hashtag suggestions
  */
 export async function generateHashtags(

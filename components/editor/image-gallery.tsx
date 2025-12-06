@@ -5,18 +5,29 @@ import { X, Search, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+// Image size options with max-width constraints
+export const IMAGE_SIZES = {
+  small: { maxWidth: 300, label: "Small", description: "300px max width" },
+  medium: { maxWidth: 500, label: "Medium", description: "500px max width" },
+  large: { maxWidth: 800, label: "Large", description: "800px max width" },
+  full: { maxWidth: "100%", label: "Full Width", description: "Full container width" },
+} as const;
+
+export type ImageSize = keyof typeof IMAGE_SIZES;
+
 interface Product {
   id: string;
   name: string;
   imageUrls: string[];
   color: string | null;
   price: number | null;
+  inventory: number | null;
 }
 
 interface ImageGalleryProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (imageUrl: string, altText?: string) => void;
+  onSelect: (imageUrl: string, altText?: string, size?: ImageSize) => void;
 }
 
 interface ImageItem {
@@ -31,8 +42,10 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<ImageSize>("medium");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [inStockOnly, setInStockOnly] = useState(true); // Default to in-stock only
 
   // Fetch products on mount
   useEffect(() => {
@@ -56,10 +69,16 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
     }
   };
 
+  // Filter products by inventory first
+  const stockFilteredProducts = useMemo(() => {
+    if (!inStockOnly) return products;
+    return products.filter((product) => (product.inventory ?? 0) > 0);
+  }, [products, inStockOnly]);
+
   // Flatten all images for "All Images" tab
   const allImages = useMemo(() => {
     const images: ImageItem[] = [];
-    products.forEach((product) => {
+    stockFilteredProducts.forEach((product) => {
       product.imageUrls.forEach((url) => {
         images.push({
           url,
@@ -70,7 +89,7 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
       });
     });
     return images;
-  }, [products]);
+  }, [stockFilteredProducts]);
 
   // Filter images by search query
   const filteredImages = useMemo(() => {
@@ -82,15 +101,15 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
     );
   }, [allImages, searchQuery]);
 
-  // Filter products by search query
+  // Filter products by search query (already stock-filtered)
   const filteredProducts = useMemo(() => {
-    if (!searchQuery) return products;
+    if (!searchQuery) return stockFilteredProducts;
     const query = searchQuery.toLowerCase();
-    return products.filter((product) =>
+    return stockFilteredProducts.filter((product) =>
       product.name.toLowerCase().includes(query) ||
       product.color?.toLowerCase().includes(query)
     );
-  }, [products, searchQuery]);
+  }, [stockFilteredProducts, searchQuery]);
 
   // Get images for selected product
   const productImages = useMemo(() => {
@@ -109,9 +128,10 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
     if (selectedImage) {
       const image = allImages.find((img) => img.url === selectedImage);
       const altText = image ? `${image.productName}${image.color ? ` - ${image.color}` : ""}` : undefined;
-      onSelect(selectedImage, altText);
+      onSelect(selectedImage, altText, selectedSize);
       onClose();
       setSelectedImage(null);
+      setSelectedSize("medium");
     }
   };
 
@@ -120,6 +140,7 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
     setSelectedImage(null);
     setSearchQuery("");
     setSelectedProduct(null);
+    setSelectedSize("medium");
   };
 
   if (!isOpen) return null;
@@ -194,27 +215,42 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
             </button>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar and Filters */}
           <div className="p-6 border-b" style={{ borderColor: "var(--card-border)" }}>
-            <div className="relative">
-              <Search
-                size={18}
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <input
-                type="text"
-                placeholder={activeTab === "all" ? "Search by product or color..." : "Search products..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2"
-                style={{
-                  backgroundColor: "var(--background)",
-                  borderColor: "var(--card-border)",
-                  color: "var(--text-primary)",
-                  "--tw-ring-color": "var(--weld)",
-                } as React.CSSProperties}
-              />
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1">
+                <Search
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "var(--text-muted)" }}
+                />
+                <input
+                  type="text"
+                  placeholder={activeTab === "all" ? "Search by product or color..." : "Search products..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2"
+                  style={{
+                    backgroundColor: "var(--background)",
+                    borderColor: "var(--card-border)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+
+              {/* In Stock Filter */}
+              <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => setInStockOnly(e.target.checked)}
+                  className="w-4 h-4 rounded border-2 cursor-pointer"
+                  style={{ accentColor: "var(--weld)" }}
+                />
+                <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                  In stock only
+                </span>
+              </label>
             </div>
           </div>
 
@@ -238,9 +274,49 @@ export default function ImageGallery({ isOpen, onClose, onSelect }: ImageGallery
 
           {/* Footer */}
           <div className="flex items-center justify-between p-6 border-t" style={{ borderColor: "var(--card-border)" }}>
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              {selectedImage ? "1 image selected" : "No image selected"}
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                {selectedImage ? "1 image selected" : "No image selected"}
+              </p>
+
+              {/* Size Selector */}
+              {selectedImage && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Size:
+                  </span>
+                  <div className="flex gap-1">
+                    {(Object.keys(IMAGE_SIZES) as ImageSize[]).map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                          selectedSize === size
+                            ? "shadow-sm"
+                            : "hover:bg-[var(--background)]"
+                        )}
+                        style={
+                          selectedSize === size
+                            ? {
+                                backgroundColor: "var(--weld)",
+                                color: "white",
+                              }
+                            : {
+                                backgroundColor: "var(--card-border)",
+                                color: "var(--text-secondary)",
+                              }
+                        }
+                        title={IMAGE_SIZES[size].description}
+                      >
+                        {IMAGE_SIZES[size].label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3">
               <Button variant="outline" onClick={handleClose}>
                 Cancel

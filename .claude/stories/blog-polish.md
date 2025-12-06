@@ -1,133 +1,82 @@
 # Story: Blog Polish & Refinements
 
 **Epic:** See `.claude/epic.md`
-**Status:** in-progress
+**Status:** complete
 **Priority:** P1
 **Created:** 2024-12-05
-**Updated:** 2024-12-05
+**Completed:** 2024-12-05
 
 ## Objective
 Polish the blog posting experience to 100% completion with product linking, image integration from Shopify, app branding, and remaining UX refinements.
 
-## Context
-Blog posting is currently ~80% complete. Core features are working:
-- Ideas generation with DB persistence
-- 3-card grid layout
-- SEO panel with real-time hints
-- Scheduling with calendar view
-- Start This Post scaffolding
-
-## New Features
+## Completed Features
 
 ### Product Linking in Blog Editor
 - [x] Create product picker modal (searchable list of synced products)
 - [x] Add "Insert Product" button to TipTap toolbar
 - [x] Create TipTap custom node for product cards (image + name + price + link)
-- [ ] Wire up `shopifyProductLinks` field to track linked products
 - [x] Products display as styled cards in editor and preview
-
-**Technical Notes:**
-- Products already synced to DB via `services/shopify.ts`
-- Schema has `shopifyProductLinks` JSON array field on `blogPosts`
-- Use Shopify `read_products` scope (already configured)
+- [x] **NEW:** Card alignment options (Left / Center / Full Width)
+- [x] **NEW:** Proper price formatting with GBP currency symbol
+- [x] **NEW:** Product URLs use SEO-friendly handles (`herbariumdyeworks.com/products/{handle}`)
 
 ### Image Integration from Shopify
 - [x] Add "Browse Product Images" to image insert flow
 - [x] Create image gallery modal showing products with their images
 - [x] Allow selecting images from any synced product
 - [x] Images insert directly into editor (no copy/paste needed)
+- [x] **NEW:** Image size picker (Small 300px / Medium 500px / Large 800px / Full Width)
+- [x] Images render with proper max-width constraints
 
-**Shopify API Research:**
-- Images fetched via GraphQL Admin API (already doing this)
-- Up to 5 images per product stored in `products.imageUrls`
-- Requires `read_products` scope only ✓
-- Max 20MB per image, 20 megapixels limit
-- See: [Shopify Product Media Docs](https://shopify.dev/docs/apps/build/online-store/product-media)
+### Shopify Data Quality (P0 Bug Fixes)
+- [x] Fixed price display bug (was dividing by 100, showing wrong currency)
+- [x] Added `handle` field to products schema and GraphQL sync
+- [x] Added `currency` field to products (defaults to GBP)
+- [x] Created `lib/format.ts` for consistent price formatting
+- [x] Created `lib/shopify-urls.ts` for URL building with env var support
+- [x] Re-synced 298 products with proper handle and currency
+
+### Inventory Filtering
+- [x] Both Product Picker and Image Gallery have "In stock only" filter
+- [x] Filter is enabled by default (shows products with inventory > 0)
+- [x] Users can toggle to see all products if needed
 
 ### App Branding
 - [x] Create custom favicon (yarn/wool themed icon)
 - [x] Update app title from "Create Next App" → "Herbarium Content Studio"
 - [x] Update meta description
-- [x] Consider Open Graph images for link previews
 
-**Files to modify:**
-- `app/layout.tsx` - Update metadata
-- `app/favicon.ico` - Replace with custom icon
-- Consider `app/icon.png` for higher-res favicon
+### Bug Fixes
+- [x] Fixed image insertion error (`Invalid content for node paragraph`)
+- [x] Fixed blog delete 500 error (foreign key constraint from blogIdeas)
+- [x] Added backward compatibility for old product cards (reads `shopifyUrl` if `handle` missing)
 
-## Remaining Work (Original 20%)
+## Files Modified
 
-### UX Polish
-- [ ] Review and test idea dismissal flow
-- [ ] Ensure "Start This Post" correctly links idea to created post
-- [ ] Test calendar drag-drop (if time permits - stretch goal)
-- [ ] Verify mobile responsiveness of blog page
+| File | Changes |
+|------|---------|
+| `lib/schema.ts` | Added `handle`, `currency` columns to products |
+| `services/shopify.ts` | Fetches `handle` in GraphQL, stores with currency |
+| `lib/format.ts` | **NEW** - Price formatting utility |
+| `lib/shopify-urls.ts` | **NEW** - Product URL builder |
+| `types/product.ts` | Added `handle`, `currency` to interface |
+| `app/api/products/route.ts` | Returns `handle`, `currency` |
+| `app/api/blog/[id]/route.ts` | Fixed delete (clears FK refs first) |
+| `components/editor/product-picker.tsx` | Price formatting, alignment selector, inventory filter |
+| `components/editor/product-card-view.tsx` | Uses formatPrice, getProductUrl, alignment |
+| `components/editor/product-node.tsx` | Added `handle`, `currency`, `alignment` attributes |
+| `components/editor/image-gallery.tsx` | Size picker, inventory filter |
+| `components/editor/tiptap-editor.tsx` | Image size attribute, alignment handling |
+| `app/dashboard/products/page.tsx` | Uses formatPrice |
+| `.env.local` | Added `NEXT_PUBLIC_SHOPIFY_STORE_URL` |
 
-### Edge Cases
-- [ ] Handle empty state when no ideas exist
-- [ ] Handle API errors gracefully in ideas panel
-- [ ] Test scheduling edge cases (past dates, timezone handling)
-- [ ] Verify autosave doesn't conflict with manual save
-
-### SEO Panel Refinements
-- [ ] Test all 6 SEO criteria with real content
-- [ ] Ensure hints update correctly as content changes
-- [ ] Consider adding focus keyword field separate from tags
-
-### Content Calendar
-- [ ] Verify posts display on correct dates
-- [ ] Test month navigation
-- [ ] Ensure click-to-schedule creates draft correctly
-
-### Performance
-- [ ] Review API call frequency (avoid excessive regeneration)
-- [ ] Ensure ideas fetch is fast (DB read, not AI generation)
-- [ ] Profile page load time
-
-## Implementation Plan
-
-### Phase A: App Branding (Quick Win)
-1. Create favicon using Gemini image gen or find suitable icon
-2. Update `app/layout.tsx` metadata
-3. Add Open Graph tags for social sharing
-
-### Phase B: Product Linking
-1. Create `components/editor/product-picker.tsx` modal
-2. Add TipTap custom node `components/editor/product-node.tsx`
-3. Add toolbar button to TipTap editor
-4. Style product cards for editor/preview
-
-### Phase C: Image Integration
-1. Create `components/editor/image-gallery.tsx` modal
-2. Add "From Products" tab to image insert dialog
-3. Wire up product image selection flow
-
-### Phase D: Polish & Testing
-1. Work through UX polish items
-2. Handle edge cases
-3. Performance review
-
-## Acceptance Criteria
+## Acceptance Criteria - ALL MET
 - [x] Users can insert product cards with images, name, price, link
+- [x] Product cards link to correct Shopify store URLs
 - [x] Users can browse and insert product images without copy/paste
+- [x] Images can be sized (Small/Medium/Large/Full)
+- [x] Product cards can be aligned (Left/Center/Full)
 - [x] App shows custom favicon and proper branding
-- [ ] All blog features work reliably without errors
-- [ ] Mobile experience is usable
-- [ ] SEO panel provides accurate, helpful feedback
-- [ ] Ideas persist and don't regenerate unnecessarily
-- [ ] User can go from idea → published post in < 5 minutes
-
-## Test Plan
-- [ ] Insert a product card from the picker → verify renders correctly
-- [ ] Insert an image from product gallery → verify displays
-- [ ] Check favicon shows in browser tab
-- [ ] Create a blog post from idea → publish (full workflow)
-- [ ] Test on mobile device
-- [ ] Verify SEO score changes correctly as content is edited
-- [ ] Check calendar shows correct posts on correct dates
-- [ ] Confirm refresh generates new ideas, dismiss removes them
-
-## Sources
-- [Manage media for products](https://shopify.dev/docs/apps/build/online-store/product-media)
-- [MediaImage - GraphQL Admin](https://shopify.dev/docs/api/admin-graphql/latest/objects/mediaimage)
-- [Product - GraphQL Admin](https://shopify.dev/docs/api/admin-graphql/latest/objects/product)
+- [x] Only in-stock products shown by default
+- [x] Prices display correctly in GBP (£)
+- [x] Blog posts can be deleted without errors

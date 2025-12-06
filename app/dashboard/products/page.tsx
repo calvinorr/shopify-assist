@@ -4,12 +4,18 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Filter, Package, Loader2, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Package, X, Check } from "lucide-react";
 import Image from "next/image";
+import { formatPrice } from "@/lib/format";
 
 interface Product {
   id: string;
   shopifyProductId: string;
+  handle: string | null;
   name: string;
   description: string | null;
   color: string | null;
@@ -17,6 +23,7 @@ interface Product {
   imageUrls: string[];
   inventory: number | null;
   price: number | null;
+  currency: string | null;
   createdAt: string;
 }
 
@@ -33,18 +40,17 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState<string>("");
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [total, setTotal] = useState(0);
 
-  // Fetch available colors on mount
   useEffect(() => {
     fetchColors();
   }, []);
 
-  // Fetch products when search or filter changes
   useEffect(() => {
     fetchProducts();
-  }, [selectedColor]);
+  }, [selectedColor, inStockOnly]);
 
   async function fetchColors() {
     try {
@@ -71,6 +77,9 @@ export default function ProductsPage() {
       if (selectedColor) {
         params.set("color", selectedColor);
       }
+      if (inStockOnly) {
+        params.set("inStock", "true");
+      }
 
       const res = await fetch(`/api/products?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch products");
@@ -85,7 +94,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Client-side search filter
   const filteredProducts = products.filter((product) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -99,9 +107,10 @@ export default function ProductsPage() {
   function clearFilters() {
     setSearchQuery("");
     setSelectedColor("");
+    setInStockOnly(false);
   }
 
-  const hasActiveFilters = searchQuery || selectedColor;
+  const hasActiveFilters = searchQuery || selectedColor || inStockOnly;
 
   return (
     <>
@@ -115,42 +124,25 @@ export default function ProductsPage() {
         <div className="mb-6 space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row">
             {/* Search Input */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search
-                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                  style={{ color: "var(--text-muted)" }}
-                />
-                <input
-                  type="text"
-                  placeholder="Search products by name or color..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg py-2 pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2"
-                  style={{
-                    backgroundColor: "var(--card-bg)",
-                    border: "1px solid var(--card-border)",
-                    color: "var(--text-primary)",
-                  }}
-                />
-              </div>
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none"
+                style={{ color: "var(--text-muted)" }}
+              />
+              <Input
+                type="text"
+                placeholder="Search products by name or color..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
 
             {/* Color Filter */}
-            <div className="relative min-w-[200px]">
-              <Filter
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <select
+            <div className="min-w-[180px]">
+              <Select
                 value={selectedColor}
                 onChange={(e) => setSelectedColor(e.target.value)}
-                className="w-full appearance-none rounded-lg py-2 pl-10 pr-10 text-sm transition-all focus:outline-none focus:ring-2"
-                style={{
-                  backgroundColor: "var(--card-bg)",
-                  border: "1px solid var(--card-border)",
-                  color: selectedColor ? "var(--text-primary)" : "var(--text-muted)",
-                }}
               >
                 <option value="">All Colors</option>
                 {availableColors.map((color) => (
@@ -158,14 +150,19 @@ export default function ProductsPage() {
                     {color}
                   </option>
                 ))}
-              </select>
-              <div
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--text-muted)" }}
-              >
-                ▼
-              </div>
+              </Select>
             </div>
+
+            {/* In Stock Toggle */}
+            <Button
+              variant={inStockOnly ? "primary" : "outline"}
+              size="md"
+              onClick={() => setInStockOnly(!inStockOnly)}
+              style={inStockOnly ? { backgroundColor: "var(--success)", color: "white" } : undefined}
+            >
+              {inStockOnly && <Check className="h-4 w-4 mr-1" />}
+              In Stock
+            </Button>
 
             {/* Clear Filters */}
             {hasActiveFilters && (
@@ -181,26 +178,13 @@ export default function ProductsPage() {
             <div className="flex items-center gap-2 text-sm">
               <span style={{ color: "var(--text-muted)" }}>Active filters:</span>
               {searchQuery && (
-                <span
-                  className="rounded-full px-3 py-1"
-                  style={{
-                    backgroundColor: "var(--indigo-light)",
-                    color: "var(--indigo)",
-                  }}
-                >
-                  Search: {searchQuery}
-                </span>
+                <Badge variant="indigo">Search: {searchQuery}</Badge>
               )}
               {selectedColor && (
-                <span
-                  className="rounded-full px-3 py-1"
-                  style={{
-                    backgroundColor: "var(--weld-light)",
-                    color: "var(--weld)",
-                  }}
-                >
-                  Color: {selectedColor}
-                </span>
+                <Badge variant="warning">Color: {selectedColor}</Badge>
+              )}
+              {inStockOnly && (
+                <Badge variant="success">In Stock Only</Badge>
               )}
             </div>
           )}
@@ -208,11 +192,17 @@ export default function ProductsPage() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex h-64 items-center justify-center">
-            <Loader2
-              className="h-8 w-8 animate-spin"
-              style={{ color: "var(--text-muted)" }}
-            />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="aspect-square w-full" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+              </Card>
+            ))}
           </div>
         )}
 
@@ -328,19 +318,18 @@ export default function ProductsPage() {
 
                     {/* Inventory Badge */}
                     {product.inventory !== null && (
-                      <div
-                        className="absolute right-2 top-2 rounded-full px-2 py-1 text-xs font-medium"
-                        style={{
-                          backgroundColor: "var(--card-bg)",
-                          color:
+                      <div className="absolute right-2 top-2">
+                        <Badge
+                          variant={
                             product.inventory > 10
-                              ? "var(--success)"
+                              ? "success"
                               : product.inventory > 0
-                              ? "var(--warning)"
-                              : "var(--danger)",
-                        }}
-                      >
-                        {product.inventory} in stock
+                              ? "warning"
+                              : "danger"
+                          }
+                        >
+                          {product.inventory} in stock
+                        </Badge>
                       </div>
                     )}
                   </div>
@@ -364,45 +353,26 @@ export default function ProductsPage() {
                     )}
 
                     <div className="flex items-center justify-between">
-                      {product.price !== null ? (
-                        <span
-                          className="text-lg font-bold"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          £{product.price.toFixed(2)}
-                        </span>
-                      ) : (
-                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>
-                          No price
-                        </span>
-                      )}
+                      <span
+                        className="text-lg font-bold"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {formatPrice(product.price, (product.currency as "GBP" | "USD" | "EUR") || "GBP")}
+                      </span>
                     </div>
 
                     {/* Tags */}
                     {product.tags.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
                         {product.tags.slice(0, 2).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full px-2 py-0.5 text-xs"
-                            style={{
-                              backgroundColor: "var(--walnut-light)",
-                              color: "var(--walnut)",
-                            }}
-                          >
+                          <Badge key={tag} variant="muted" size="sm">
                             {tag}
-                          </span>
+                          </Badge>
                         ))}
                         {product.tags.length > 2 && (
-                          <span
-                            className="rounded-full px-2 py-0.5 text-xs"
-                            style={{
-                              backgroundColor: "var(--background)",
-                              color: "var(--text-muted)",
-                            }}
-                          >
+                          <Badge variant="default" size="sm">
                             +{product.tags.length - 2}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     )}

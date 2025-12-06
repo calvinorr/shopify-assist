@@ -60,7 +60,7 @@ drizzle/                    # Database migrations
 
 ## Current Session Progress
 
-**Last updated**: Dec 2, 2025
+**Last updated**: Dec 5, 2025
 
 ### Completed This Session
 - [x] Project scaffolded with Next.js 14+, Tailwind v4, TypeScript
@@ -78,10 +78,15 @@ drizzle/                    # Database migrations
 - [ ] Instagram (Phase 2)
 
 ### Next Steps
-1. **Build Shopify product sync** - Fetch products via GraphQL, store in Turso
-2. **Wire up dashboard** - Display real product/color data
-3. **Create products page** - List synced products
-4. **Basic blog editor** - TipTap implementation
+1. **Instagram OAuth** - Connect to Instagram Business Account (P1)
+2. **Instagram Analytics** - Track post engagement (P2)
+3. **Product Enhancements** - Best sellers filter, sales data sync (P3)
+
+### Recently Completed (Dec 5)
+- Dashboard Redesign (QuickActions, ContentStats, ActivityFeed)
+- Design System (Select, Textarea, Badge, Skeleton components)
+- Instagram Post Creator UI (composer, drafts, manual posting workflow)
+- Products page "In Stock" filter
 
 ## Development Phases
 

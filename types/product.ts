@@ -1,6 +1,7 @@
 export interface Product {
   id: string;
   shopifyProductId: string | null;
+  handle: string | null;
   name: string;
   description: string | null;
   color: string | null;
@@ -8,6 +9,7 @@ export interface Product {
   imageUrls: string[];
   inventory: number | null;
   price: number | null;
+  currency: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

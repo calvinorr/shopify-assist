@@ -14,6 +14,7 @@ export const users = sqliteTable("users", {
 export const products = sqliteTable("products", {
   id: text("id").primaryKey(),
   shopifyProductId: text("shopify_product_id").unique(),
+  handle: text("handle"), // URL-friendly product slug from Shopify
   name: text("name").notNull(),
   description: text("description"),
   color: text("color"),
@@ -21,6 +22,7 @@ export const products = sqliteTable("products", {
   imageUrls: text("image_urls"), // JSON array
   inventory: integer("inventory"),
   price: real("price"),
+  currency: text("currency").default("GBP"), // Store currency (GBP for Herbarium)
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

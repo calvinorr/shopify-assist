@@ -1,26 +1,24 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
-import { HeroSection } from "./hero-section";
-import { AISuggestions, InstagramIdea, BlogTopic } from "./ai-suggestions";
-import { DataContextSection } from "./data-context-section";
-import { DraftsWidget } from "./drafts-widget";
-import { QuickStats } from "./quick-stats";
+import { RefreshCw, Sparkles, FileText, Instagram } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Header } from "@/components/layout/header";
+import { IdeaCard } from "./idea-card";
+import { HeaderStats } from "./header-stats";
 
-// Types
-interface ProductStats {
-  totalProducts: number;
-  totalInventory: number;
-  colorDistribution: Array<{ color: string; count: number }>;
-  recentProducts: Array<{
-    id: string;
-    name: string;
-    color: string | null;
-    price: number | null;
-    inventory: number | null;
-    imageUrls: string[];
-  }>;
+interface BlogIdea {
+  title: string;
+  description: string;
+  reasoning: string;
+  suggestedKeywords: string[];
+}
+
+interface InstagramIdea {
+  title: string;
+  description: string;
+  reasoning: string;
 }
 
 interface BlogPost {
@@ -28,144 +26,315 @@ interface BlogPost {
   title: string;
   updatedAt: string;
   status: string;
-}
-
-interface AISuggestionsData {
-  instagram: InstagramIdea[];
-  blog: BlogTopic;
+  scheduledAt?: string | null;
+  publishedAt?: string | null;
 }
 
 export function DashboardContent() {
-  const [stats, setStats] = useState<ProductStats | null>(null);
-  const [drafts, setDrafts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [blogIdeas, setBlogIdeas] = useState<BlogIdea[]>([]);
+  const [instagramIdeas, setInstagramIdeas] = useState<InstagramIdea[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // AI suggestions state
-  const [aiSuggestions, setAiSuggestions] = useState<AISuggestionsData | null>(null);
-  const [aiLoading, setAiLoading] = useState(true);
-  const [aiRefreshing, setAiRefreshing] = useState(false);
-
-  const fetchAISuggestions = useCallback(async (refresh = false) => {
+  const fetchData = useCallback(async () => {
     try {
-      if (refresh) {
-        setAiRefreshing(true);
-        // POST to generate new suggestions
-        const res = await fetch("/api/ai/suggestions", { method: "POST" });
-        if (res.ok) {
-          const data = await res.json();
-          setAiSuggestions(data);
-        }
-      } else {
-        setAiLoading(true);
-        // GET to load cached suggestions (fast, no AI)
-        const res = await fetch("/api/ai/suggestions");
-        if (res.ok) {
-          const data = await res.json();
-          setAiSuggestions(data);
-        }
+      setIsLoading(true);
+
+      const [suggestionsRes, blogRes] = await Promise.all([
+        fetch("/api/ai/suggestions"),
+        fetch("/api/blog"),
+      ]);
+
+      if (suggestionsRes.ok) {
+        const data = await suggestionsRes.json();
+        setBlogIdeas(data.blog || []);
+        setInstagramIdeas(data.instagram || []);
       }
-    } catch (err) {
-      console.error("Failed to fetch AI suggestions:", err);
+
+      if (blogRes.ok) {
+        const blogData = await blogRes.json();
+        setPosts(blogData.posts || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
     } finally {
-      setAiLoading(false);
-      setAiRefreshing(false);
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchData();
-    fetchAISuggestions();
-  }, [fetchAISuggestions]);
+  }, [fetchData]);
 
-  async function fetchData() {
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
-      setLoading(true);
-
-      // Fetch product stats and blog drafts in parallel
-      const [statsRes, blogRes] = await Promise.all([
-        fetch("/api/products/stats"),
-        fetch("/api/blog"),
-      ]);
-
-      if (!statsRes.ok) throw new Error("Failed to fetch stats");
-
-      const statsData = await statsRes.json();
-      setStats(statsData);
-
-      if (blogRes.ok) {
-        const blogData = await blogRes.json();
-        // Filter for drafts only
-        const draftPosts = (blogData.posts || []).filter(
-          (post: BlogPost) => post.status === "draft"
-        );
-        setDrafts(draftPosts);
+      const res = await fetch("/api/ai/suggestions", { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setBlogIdeas(data.blog || []);
+        setInstagramIdeas(data.instagram || []);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load");
+    } catch (error) {
+      console.error("Failed to refresh ideas:", error);
     } finally {
-      setLoading(false);
+      setIsRefreshing(false);
     }
-  }
+  };
 
-  const handleRefreshAI = useCallback(() => {
-    fetchAISuggestions(true);
-  }, [fetchAISuggestions]);
+  // Compute content stats
+  const drafts = posts.filter((p) => p.status === "draft");
+  const scheduled = posts.filter(
+    (p) => p.scheduledAt && new Date(p.scheduledAt) > new Date()
+  );
+  const published = posts.filter((p) => p.status === "published");
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--text-muted)" }} />
-      </div>
-    );
-  }
+  // Get dates
+  const nextScheduled = scheduled
+    .map((p) => p.scheduledAt)
+    .filter(Boolean)
+    .sort()[0];
 
-  if (error) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <p style={{ color: "var(--danger)" }}>{error}</p>
-      </div>
-    );
-  }
+  const lastPublished = published
+    .map((p) => p.publishedAt)
+    .filter(Boolean)
+    .sort()
+    .reverse()[0];
 
-  // Prepare data for components
-  const topColors = stats?.colorDistribution?.slice(0, 3) || [];
-  const recentProducts = stats?.recentProducts?.slice(0, 3).map((p) => ({
-    name: p.name,
-    color: p.color || "Natural",
-  })) || [];
+  // Most recent draft
+  const mostRecentDraft = drafts.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  )[0];
+
+  // Helper to build URL with query params
+  const buildBlogUrl = (idea: BlogIdea) => {
+    const params = new URLSearchParams();
+    params.set("title", idea.title);
+    params.set("description", idea.description);
+    if (idea.suggestedKeywords?.length) {
+      params.set("keywords", idea.suggestedKeywords.join(","));
+    }
+    return `/dashboard/blog/new?${params.toString()}`;
+  };
+
+  const buildInstagramUrl = (idea: InstagramIdea) => {
+    const params = new URLSearchParams();
+    params.set("newPost", "true");
+    params.set("title", idea.title);
+    params.set("description", idea.description);
+    return `/dashboard/instagram?${params.toString()}`;
+  };
+
+  const hasIdeas = blogIdeas.length > 0 || instagramIdeas.length > 0;
 
   return (
-    <div className="p-6 space-y-6" style={{ backgroundColor: "var(--background)" }}>
-      {/* Hero Section - Primary CTA */}
-      <HeroSection optimalPostTime="7:00 PM" />
-
-      {/* AI Suggestions - Content Ideas */}
-      <AISuggestions
-        instagramIdeas={aiSuggestions?.instagram || []}
-        blogTopic={aiSuggestions?.blog || null}
-        isLoading={aiLoading}
-        isRefreshing={aiRefreshing}
-        onRefresh={handleRefreshAI}
-      />
-
-      {/* Two Column Layout: Data Context + Drafts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DataContextSection
-          topColors={topColors}
-          recentProducts={recentProducts}
-          isLoading={loading}
+    <>
+      {/* Header with Content Stats */}
+      <Header title="Dashboard">
+        <HeaderStats
+          draftCount={drafts.length}
+          nextScheduledDate={nextScheduled}
+          lastPublishedDate={lastPublished}
+          isLoading={isLoading}
         />
-        <DraftsWidget drafts={drafts} isLoading={loading} />
-      </div>
+      </Header>
 
-      {/* Quick Stats - De-emphasized at bottom */}
-      <QuickStats
-        productCount={stats?.totalProducts || 0}
-        inventoryTotal={stats?.totalInventory || 0}
-        colorCount={stats?.colorDistribution?.length || 0}
-        postsThisWeek={drafts.length}
+      <div
+        className="p-6 space-y-8 max-w-6xl mx-auto"
+        style={{ backgroundColor: "var(--background)" }}
+      >
+        {/* Blog Ideas Section */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="rounded-lg p-2"
+              style={{ backgroundColor: "var(--indigo-light)" }}
+            >
+              <FileText className="w-5 h-5" style={{ color: "var(--indigo)" }} />
+            </div>
+            <h2
+              className="text-xl font-semibold"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Blog Ideas
+            </h2>
+          </div>
+          {hasIdeas && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+            >
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              {isRefreshing ? "Generating..." : "New Ideas"}
+            </Button>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : blogIdeas.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {blogIdeas.slice(0, 3).map((idea, index) => (
+              <IdeaCard
+                key={index}
+                type="blog"
+                title={idea.title}
+                description={idea.description}
+                reasoning={idea.reasoning}
+                keywords={idea.suggestedKeywords}
+                href={buildBlogUrl(idea)}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            type="blog"
+            onGenerate={handleRefresh}
+            isGenerating={isRefreshing}
+          />
+        )}
+      </section>
+
+      {/* Instagram Ideas Section */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="rounded-lg p-2"
+            style={{ backgroundColor: "var(--madder-light)" }}
+          >
+            <Instagram className="w-5 h-5" style={{ color: "var(--madder)" }} />
+          </div>
+          <h2
+            className="text-xl font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Instagram Ideas
+          </h2>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : instagramIdeas.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {instagramIdeas.slice(0, 3).map((idea, index) => (
+              <IdeaCard
+                key={index}
+                type="instagram"
+                title={idea.title}
+                description={idea.description}
+                reasoning={idea.reasoning}
+                href={buildInstagramUrl(idea)}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            type="instagram"
+            onGenerate={handleRefresh}
+            isGenerating={isRefreshing}
+          />
+        )}
+      </section>
+      </div>
+    </>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div
+      className="rounded-xl p-5 animate-pulse"
+      style={{
+        backgroundColor: "var(--card)",
+        border: "1px solid var(--card-border)",
+      }}
+    >
+      <div className="flex justify-end mb-3">
+        <div
+          className="w-10 h-10 rounded-full"
+          style={{ backgroundColor: "var(--background)" }}
+        />
+      </div>
+      <div
+        className="h-5 rounded mb-2"
+        style={{ backgroundColor: "var(--background)", width: "80%" }}
       />
+      <div className="space-y-2 mb-4">
+        <div
+          className="h-4 rounded"
+          style={{ backgroundColor: "var(--background)", width: "100%" }}
+        />
+        <div
+          className="h-4 rounded"
+          style={{ backgroundColor: "var(--background)", width: "70%" }}
+        />
+      </div>
+      <div
+        className="h-10 rounded-lg"
+        style={{ backgroundColor: "var(--background)" }}
+      />
+    </div>
+  );
+}
+
+function EmptyState({
+  type,
+  onGenerate,
+  isGenerating,
+}: {
+  type: "blog" | "instagram";
+  onGenerate: () => void;
+  isGenerating: boolean;
+}) {
+  const isBlog = type === "blog";
+
+  return (
+    <div
+      className="rounded-xl p-8 text-center"
+      style={{
+        backgroundColor: "var(--card)",
+        border: "1px solid var(--card-border)",
+      }}
+    >
+      <Sparkles
+        className="w-10 h-10 mx-auto mb-3"
+        style={{ color: isBlog ? "var(--indigo)" : "var(--madder)" }}
+      />
+      <h3
+        className="text-base font-medium mb-2"
+        style={{ color: "var(--text-primary)" }}
+      >
+        No {isBlog ? "blog" : "Instagram"} ideas yet
+      </h3>
+      <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+        Generate AI-powered ideas based on your products
+      </p>
+      <Button
+        variant="primary"
+        size="md"
+        onClick={onGenerate}
+        disabled={isGenerating}
+        style={{
+          backgroundColor: isBlog ? "var(--indigo)" : "var(--madder)",
+        }}
+      >
+        <Sparkles className={`w-4 h-4 mr-2 ${isGenerating ? "animate-pulse" : ""}`} />
+        {isGenerating ? "Generating..." : "Generate Ideas"}
+      </Button>
     </div>
   );
 }

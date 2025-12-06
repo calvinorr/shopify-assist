@@ -74,20 +74,22 @@ export function analyzeSEO(params: {
   const hasEnoughWords = wordCount >= 500;
   checks.push({
     passed: hasEnoughWords,
-    label: "Content length (500+ words)",
+    label: `Content length (${wordCount} words)`,
     points: hasEnoughWords ? 15 : 0,
     maxPoints: 15,
-    hint: hasEnoughWords ? null : `Add ${500 - wordCount} more words (${wordCount}/500)`
+    hint: hasEnoughWords ? null : `Add ${500 - wordCount} more words to reach 500`
   });
 
-  // 6. Has internal links (+15)
+  // 6. Has internal links (+15) - includes <a> tags and product cards
   const hasLinks = params.contentHtml?.includes("<a ") || false;
+  const hasProductCards = params.contentHtml?.includes('data-type="product-card"') || false;
+  const hasInternalLinks = hasLinks || hasProductCards;
   checks.push({
-    passed: hasLinks,
+    passed: hasInternalLinks,
     label: "Internal links",
-    points: hasLinks ? 15 : 0,
+    points: hasInternalLinks ? 15 : 0,
     maxPoints: 15,
-    hint: hasLinks ? null : "Add a link to a product or related post"
+    hint: hasInternalLinks ? null : "Add a link to a product or related post"
   });
 
   const score = Math.min(checks.reduce((sum, c) => sum + c.points, 0), 100);

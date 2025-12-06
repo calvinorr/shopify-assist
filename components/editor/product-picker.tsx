@@ -6,11 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types/product";
+import { formatPrice } from "@/lib/format";
+import type { CardAlignment } from "./product-node";
+
+// Alignment options for product cards
+const ALIGNMENT_OPTIONS: { value: CardAlignment; label: string; description: string }[] = [
+  { value: "left", label: "Left", description: "Align card to the left" },
+  { value: "center", label: "Center", description: "Center the card" },
+  { value: "full", label: "Full Width", description: "Stretch to full width" },
+];
 
 interface ProductPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (product: Product) => void;
+  onSelect: (product: Product, alignment: CardAlignment) => void;
 }
 
 export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps) {
@@ -19,6 +28,8 @@ export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps)
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedAlignment, setSelectedAlignment] = useState<CardAlignment>("left");
+  const [inStockOnly, setInStockOnly] = useState(true); // Default to in-stock only
 
   // Fetch products when modal opens
   useEffect(() => {
@@ -42,22 +53,32 @@ export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps)
     }
   };
 
-  // Filter products based on search query
+  // Filter products based on search query and inventory
   const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products;
+    let filtered = products;
 
-    const query = searchQuery.toLowerCase();
-    return products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(query) ||
-        product.color?.toLowerCase().includes(query) ||
-        product.tags.some((tag) => tag.toLowerCase().includes(query))
-    );
-  }, [products, searchQuery]);
+    // Filter by inventory if enabled
+    if (inStockOnly) {
+      filtered = filtered.filter((product) => (product.inventory ?? 0) > 0);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (product) =>
+          product.name.toLowerCase().includes(query) ||
+          product.color?.toLowerCase().includes(query) ||
+          product.tags.some((tag) => tag.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  }, [products, searchQuery, inStockOnly]);
 
   const handleSelect = () => {
     if (selectedProduct) {
-      onSelect(selectedProduct);
+      onSelect(selectedProduct, selectedAlignment);
       handleClose();
     }
   };
@@ -65,6 +86,7 @@ export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps)
   const handleClose = () => {
     setSearchQuery("");
     setSelectedProduct(null);
+    setSelectedAlignment("left");
     onClose();
   };
 
@@ -131,23 +153,39 @@ export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps)
             </button>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar and Filters */}
           <div className="p-6 border-b" style={{ borderColor: "var(--card-border)" }}>
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <Input
-                placeholder="Search by product name, color, or tag..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 text-base"
-                style={{
-                  backgroundColor: "var(--background)",
-                  border: "2px solid var(--card-border)",
-                }}
-              />
+            <div className="flex gap-4 items-center">
+              <div className="relative flex-1">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
+                  style={{ color: "var(--text-muted)" }}
+                />
+                <Input
+                  placeholder="Search by product name, color, or tag..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-12 text-base"
+                  style={{
+                    backgroundColor: "var(--background)",
+                    border: "2px solid var(--card-border)",
+                  }}
+                />
+              </div>
+
+              {/* In Stock Filter */}
+              <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => setInStockOnly(e.target.checked)}
+                  className="w-4 h-4 rounded border-2 cursor-pointer"
+                  style={{ accentColor: "var(--indigo)" }}
+                />
+                <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                  In stock only
+                </span>
+              </label>
             </div>
           </div>
 
@@ -178,15 +216,55 @@ export function ProductPicker({ isOpen, onClose, onSelect }: ProductPickerProps)
             className="flex items-center justify-between p-6 border-t"
             style={{ borderColor: "var(--card-border)" }}
           >
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              {selectedProduct ? (
-                <>
-                  Selected: <span style={{ color: "var(--text-primary)" }} className="font-medium">{selectedProduct.name}</span>
-                </>
-              ) : (
-                "Select a product to continue"
+            <div className="flex items-center gap-4">
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                {selectedProduct ? (
+                  <>
+                    Selected: <span style={{ color: "var(--text-primary)" }} className="font-medium">{selectedProduct.name}</span>
+                  </>
+                ) : (
+                  "Select a product to continue"
+                )}
+              </p>
+
+              {/* Alignment Selector */}
+              {selectedProduct && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                    Alignment:
+                  </span>
+                  <div className="flex gap-1">
+                    {ALIGNMENT_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => setSelectedAlignment(option.value)}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                          selectedAlignment === option.value
+                            ? "shadow-sm"
+                            : "hover:bg-opacity-80"
+                        )}
+                        style={
+                          selectedAlignment === option.value
+                            ? {
+                                backgroundColor: "var(--indigo)",
+                                color: "white",
+                              }
+                            : {
+                                backgroundColor: "var(--card-border)",
+                                color: "var(--text-secondary)",
+                              }
+                        }
+                        title={option.description}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </p>
+            </div>
+
             <div className="flex gap-3">
               <Button variant="outline" onClick={handleClose}>
                 Cancel
@@ -245,9 +323,8 @@ interface ProductCardProps {
 
 function ProductCard({ product, isSelected, onClick }: ProductCardProps) {
   const imageUrl = product.imageUrls[0] || "/placeholder-product.png";
-  const formattedPrice = product.price
-    ? `$${(product.price / 100).toFixed(2)}`
-    : "Price not set";
+  const currency = (product.currency as 'GBP' | 'USD' | 'EUR') || 'GBP';
+  const formattedPrice = formatPrice(product.price, currency);
 
   return (
     <button

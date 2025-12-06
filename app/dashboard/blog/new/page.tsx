@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Editor } from "@tiptap/react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,12 +15,50 @@ import Link from "next/link";
 import { formatDistanceToNow, addDays, addWeeks, setHours, setMinutes, startOfWeek, isPast } from "date-fns";
 
 export default function NewBlogPostPage() {
+  return (
+    <Suspense fallback={<BlogPostLoadingState />}>
+      <NewBlogPostContent />
+    </Suspense>
+  );
+}
+
+function BlogPostLoadingState() {
+  return (
+    <>
+      <Header title="New Blog Post" description="Loading..." />
+      <div className="p-4 flex items-center justify-center h-[calc(100vh-80px)]">
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--text-muted)" }} />
+      </div>
+    </>
+  );
+}
+
+function NewBlogPostContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [tags, setTags] = useState("");
+
+  // Pre-fill from query params (from dashboard idea cards)
+  useEffect(() => {
+    const ideaTitle = searchParams.get("title");
+    const ideaDescription = searchParams.get("description");
+    const ideaKeywords = searchParams.get("keywords");
+
+    if (ideaTitle) {
+      setTitle(ideaTitle);
+    }
+    if (ideaDescription) {
+      // Set initial content with the idea description as a starting point
+      setContent(`<p>${ideaDescription}</p><p></p>`);
+    }
+    if (ideaKeywords) {
+      setTags(ideaKeywords);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [postId, setPostId] = useState<string | null>(null);

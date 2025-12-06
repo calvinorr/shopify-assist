@@ -27,6 +27,7 @@ const KNOWN_COLORS = [
 // Shopify GraphQL types
 interface ShopifyProductNode {
   id: string;
+  handle: string;
   title: string;
   description: string;
   tags: string[];
@@ -68,6 +69,7 @@ const PRODUCTS_QUERY = `
       edges {
         node {
           id
+          handle
           title
           description
           tags
@@ -172,6 +174,7 @@ function transformProduct(shopifyProduct: ShopifyProductNode) {
   return {
     id: shopifyProductId,
     shopifyProductId,
+    handle: shopifyProduct.handle, // URL-friendly product slug
     name: shopifyProduct.title,
     description: shopifyProduct.description || null,
     color: extractColor(shopifyProduct.title, shopifyProduct.tags),
@@ -179,6 +182,7 @@ function transformProduct(shopifyProduct: ShopifyProductNode) {
     imageUrls: JSON.stringify(imageUrls),
     inventory: totalInventory,
     price: firstVariant ? parseFloat(firstVariant.price) : null,
+    currency: "GBP", // Herbarium uses GBP
     updatedAt: new Date(),
   };
 }

@@ -3,21 +3,49 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { X } from 'lucide-react'
 import { useState } from 'react'
+import { formatPrice } from '@/lib/format'
+import { getProductUrl } from '@/lib/shopify-urls'
+import type { CardAlignment } from './product-node'
+
+// Alignment styles for the card container
+const alignmentStyles: Record<CardAlignment, string> = {
+  left: 'mr-auto',
+  center: 'mx-auto',
+  full: 'w-full',
+};
+
+// Max width for non-full alignments
+const maxWidthStyles: Record<CardAlignment, string> = {
+  left: 'max-w-md',
+  center: 'max-w-md',
+  full: '',
+};
 
 export function ProductCardView({ node, deleteNode }: NodeViewProps) {
-  const { name, price, imageUrl, shopifyUrl } = node.attrs as {
+  const attrs = node.attrs as {
     productId: string
     name: string
     price: number
     imageUrl: string
-    shopifyUrl: string
+    handle?: string
+    shopifyUrl?: string // Backward compatibility for old saved content
+    currency?: string
+    alignment?: CardAlignment
   }
+
+  const { name, price, imageUrl, handle, currency = 'GBP', alignment = 'left' } = attrs
+
+  // Use handle to build URL, or fall back to old shopifyUrl if present
+  const shopifyUrl = handle
+    ? getProductUrl(handle)
+    : attrs.shopifyUrl || '#'
+
   const [isHovered, setIsHovered] = useState(false)
 
   return (
     <NodeViewWrapper className="product-card-wrapper my-6">
       <div
-        className="relative bg-white border border-[#e5e0d8] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+        className={`relative bg-white border border-[#e5e0d8] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 ${alignmentStyles[alignment]} ${maxWidthStyles[alignment]}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -56,7 +84,7 @@ export function ProductCardView({ node, deleteNode }: NodeViewProps) {
                 {name}
               </h3>
               <p className="text-2xl font-bold text-[#3d5a80] mb-3">
-                ${price.toFixed(2)}
+                {formatPrice(price, (currency as 'GBP' | 'USD' | 'EUR') || 'GBP')}
               </p>
             </div>
 

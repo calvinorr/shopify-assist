@@ -18,9 +18,9 @@ import {
   ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductCard } from "./product-node";
+import { ProductCard, type CardAlignment } from "./product-node";
 import { ProductPicker } from "./product-picker";
-import ImageGallery from "./image-gallery";
+import ImageGallery, { IMAGE_SIZES, type ImageSize } from "./image-gallery";
 import type { Product } from "@/types/product";
 
 interface TiptapEditorProps {
@@ -33,6 +33,7 @@ interface TiptapEditorProps {
 export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "Start writing..." }: TiptapEditorProps) {
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [showImageGallery, setShowImageGallery] = useState(false);
+  const [wordCount, setWordCount] = useState(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -47,13 +48,35 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
       }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: "text-indigo-600 underline cursor-pointer hover:text-madder",
-        },
+        // Styling handled by .ProseMirror a {} in globals - no Tailwind class conflict
       }),
-      Image.configure({
+      Image.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            // Custom size attribute for image sizing
+            size: {
+              default: 'medium',
+              parseHTML: element => element.getAttribute('data-size') || 'medium',
+              renderHTML: attributes => {
+                const sizes: Record<string, string> = {
+                  small: '300px',
+                  medium: '500px',
+                  large: '800px',
+                  full: '100%',
+                };
+                const maxWidth = sizes[attributes.size] || '500px';
+                return {
+                  'data-size': attributes.size,
+                  style: `max-width: ${maxWidth}; height: auto;`,
+                };
+              },
+            },
+          };
+        },
+      }).configure({
         HTMLAttributes: {
-          class: "rounded-lg max-w-full h-auto my-4",
+          class: "rounded-lg my-4",
         },
       }),
       ProductCard,
@@ -67,6 +90,10 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
     },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+      // Calculate word count
+      const text = editor.getText();
+      const words = text.split(/\s+/).filter(Boolean).length;
+      setWordCount(words);
     },
   });
 
@@ -75,6 +102,15 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
       onEditorReady(editor);
     }
   }, [editor, onEditorReady]);
+
+  // Calculate initial word count when editor loads
+  useEffect(() => {
+    if (editor) {
+      const text = editor.getText();
+      const words = text.split(/\s+/).filter(Boolean).length;
+      setWordCount(words);
+    }
+  }, [editor]);
 
   if (!editor) {
     return (
@@ -133,19 +169,26 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
     }
   };
 
-  const handleProductSelect = (product: Product) => {
-    const shopifyUrl = `https://herbariumdyeworks.myshopify.com/products/${product.id}`;
+  const handleProductSelect = (product: Product, alignment: CardAlignment) => {
     editor.chain().focus().insertProductCard({
       productId: product.id,
       name: product.name,
       price: product.price || 0,
       imageUrl: product.imageUrls[0] || "",
-      shopifyUrl,
+      handle: product.handle || product.id,
+      currency: product.currency || 'GBP',
+      alignment,
     }).run();
   };
 
-  const handleImageSelect = (imageUrl: string, altText?: string) => {
-    editor.chain().focus().setImage({ src: imageUrl, alt: altText || "" }).run();
+  const handleImageSelect = (imageUrl: string, altText?: string, size?: ImageSize) => {
+    // Use setImage with custom size attribute - the extension handles the style
+    editor.chain().focus().setImage({
+      src: imageUrl,
+      alt: altText || "",
+      // @ts-expect-error - size is a custom attribute we added
+      size: size || 'medium',
+    }).run();
   };
 
   return (
@@ -228,6 +271,18 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
           icon={ShoppingBag}
           label="Insert Product Card"
         />
+
+        {/* Word count - pushed to right */}
+        <div className="flex-1" />
+        <span
+          className="text-xs px-2 py-1 rounded"
+          style={{
+            color: wordCount >= 500 ? "var(--success)" : "var(--text-muted)",
+            backgroundColor: wordCount >= 500 ? "var(--success-light)" : "transparent",
+          }}
+        >
+          {wordCount} words
+        </span>
       </div>
 
       {/* Editor */}
@@ -325,6 +380,12 @@ export function TiptapEditor({ content, onChange, onEditorReady, placeholder = "
 
         .ProseMirror .product-card-wrapper {
           margin: 1.5em 0;
+        }
+
+        /* Remove focus ring from editor - it's distracting */
+        .ProseMirror:focus,
+        .ProseMirror:focus-visible {
+          outline: none !important;
         }
       `}</style>
 

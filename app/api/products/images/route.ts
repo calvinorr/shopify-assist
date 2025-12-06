@@ -3,47 +3,53 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/schema";
 import { sql } from "drizzle-orm";
 
+/**
+ * Lightweight endpoint for fetching product images
+ * Returns only essential fields for image picker
+ */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const limit = Math.min(parseInt(searchParams.get("limit") ?? "20"), 100);
-    const offset = parseInt(searchParams.get("offset") ?? "0");
-    const color = searchParams.get("color");
+    const limit = Math.min(parseInt(searchParams.get("limit") ?? "50"), 100);
+    const search = searchParams.get("search");
     const inStock = searchParams.get("inStock") === "true";
 
     let query = db
       .select({
         id: products.id,
-        shopifyProductId: products.shopifyProductId,
-        handle: products.handle,
         name: products.name,
-        description: products.description,
         color: products.color,
         tags: products.tags,
         imageUrls: products.imageUrls,
-        inventory: products.inventory,
-        price: products.price,
-        currency: products.currency,
-        createdAt: products.createdAt,
       })
       .from(products);
 
-    // Apply filters
+    // Build conditions
     const conditions = [];
-    if (color) {
-      conditions.push(sql`${products.color} = ${color}`);
-    }
+
+    // Only products with images
+    conditions.push(sql`${products.imageUrls} IS NOT NULL AND ${products.imageUrls} != '[]'`);
+
+    // In stock filter
     if (inStock) {
       conditions.push(sql`${products.inventory} > 0`);
     }
+
+    // Search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      conditions.push(
+        sql`(LOWER(${products.name}) LIKE ${"%" + searchLower + "%"} OR LOWER(${products.color}) LIKE ${"%" + searchLower + "%"})`
+      );
+    }
+
     if (conditions.length > 0) {
       query = query.where(sql.join(conditions, sql` AND `)) as typeof query;
     }
 
     const results = await query
       .orderBy(sql`${products.name} asc`)
-      .limit(limit)
-      .offset(offset);
+      .limit(limit);
 
     // Parse JSON fields
     const parsed = results.map((p) => ({
@@ -52,16 +58,12 @@ export async function GET(request: NextRequest) {
       imageUrls: p.imageUrls ? JSON.parse(p.imageUrls) : [],
     }));
 
-    // Get total count for pagination
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(products);
+    // Filter out products with no images after parsing
+    const withImages = parsed.filter((p) => p.imageUrls.length > 0);
 
     return NextResponse.json({
-      products: parsed,
-      total: countResult[0]?.count ?? 0,
-      limit,
-      offset,
+      products: withImages,
+      total: withImages.length,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

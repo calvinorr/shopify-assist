@@ -6,6 +6,8 @@ export interface ProductCardOptions {
   HTMLAttributes: Record<string, any>
 }
 
+export type CardAlignment = 'left' | 'center' | 'full';
+
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     productCard: {
@@ -17,7 +19,9 @@ declare module '@tiptap/core' {
         name: string
         price: number
         imageUrl: string
-        shopifyUrl: string
+        handle: string
+        currency: string
+        alignment?: CardAlignment
       }) => ReturnType
     }
   }
@@ -88,17 +92,41 @@ export const ProductCard = Node.create<ProductCardOptions>({
           }
         },
       },
-      shopifyUrl: {
+      handle: {
         default: null,
-        parseHTML: element => element.getAttribute('data-shopify-url'),
+        parseHTML: element => element.getAttribute('data-handle'),
         renderHTML: attributes => {
-          if (!attributes.shopifyUrl) {
+          if (!attributes.handle) {
             return {}
           }
           return {
-            'data-shopify-url': attributes.shopifyUrl,
+            'data-handle': attributes.handle,
           }
         },
+      },
+      currency: {
+        default: 'GBP',
+        parseHTML: element => element.getAttribute('data-currency') || 'GBP',
+        renderHTML: attributes => {
+          return {
+            'data-currency': attributes.currency || 'GBP',
+          }
+        },
+      },
+      alignment: {
+        default: 'left',
+        parseHTML: element => element.getAttribute('data-alignment') || 'left',
+        renderHTML: attributes => {
+          return {
+            'data-alignment': attributes.alignment || 'left',
+          }
+        },
+      },
+      // Backward compatibility: read old shopifyUrl attribute from saved content
+      shopifyUrl: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-shopify-url'),
+        renderHTML: () => ({}), // Don't render - we use handle now
       },
     }
   },

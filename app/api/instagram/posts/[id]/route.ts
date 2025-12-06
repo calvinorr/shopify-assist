@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { blogPosts, blogIdeas } from "@/lib/schema";
+import { instagramPosts } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
-// GET /api/blog/[id] - Get single blog post
+// GET /api/instagram/posts/[id] - Get single post
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,20 +11,19 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const posts = await db
+    const [post] = await db
       .select()
-      .from(blogPosts)
-      .where(eq(blogPosts.id, id))
-      .limit(1);
+      .from(instagramPosts)
+      .where(eq(instagramPosts.id, id));
 
-    if (posts.length === 0) {
+    if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const post = posts[0];
     return NextResponse.json({
       ...post,
-      focusKeywords: post.focusKeywords ? JSON.parse(post.focusKeywords) : [],
+      imageUrls: post.imageUrls ? JSON.parse(post.imageUrls) : [],
+      hashtags: post.hashtags ? JSON.parse(post.hashtags) : [],
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -32,40 +31,33 @@ export async function GET(
   }
 }
 
-// PUT /api/blog/[id] - Update blog post
-export async function PUT(
+// PATCH /api/instagram/posts/[id] - Update post
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, content, excerpt, tags, status, scheduledAt } = body;
+    const { caption, hashtags, imageUrls, productId, status, scheduledTime } = body;
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
 
-    if (title !== undefined) {
-      updateData.title = title;
-      updateData.slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-    }
-    if (content !== undefined) updateData.contentHtml = content;
-    if (excerpt !== undefined) updateData.metaDescription = excerpt;
-    if (tags !== undefined) {
-      updateData.focusKeywords = JSON.stringify(
-        tags.split(",").map((t: string) => t.trim())
-      );
-    }
+    if (caption !== undefined) updateData.caption = caption;
+    if (hashtags !== undefined) updateData.hashtags = JSON.stringify(hashtags);
+    if (imageUrls !== undefined) updateData.imageUrls = JSON.stringify(imageUrls);
+    if (productId !== undefined) updateData.shopifyProductId = productId;
     if (status !== undefined) updateData.status = status;
-    if (scheduledAt !== undefined) {
-      updateData.scheduledAt = scheduledAt ? new Date(scheduledAt * 1000) : null;
+    if (scheduledTime !== undefined) {
+      updateData.scheduledTime = scheduledTime ? new Date(scheduledTime) : null;
     }
 
-    await db.update(blogPosts).set(updateData).where(eq(blogPosts.id, id));
+    await db
+      .update(instagramPosts)
+      .set(updateData)
+      .where(eq(instagramPosts.id, id));
 
     return NextResponse.json({ message: "Post updated successfully" });
   } catch (error) {
@@ -74,7 +66,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/blog/[id] - Delete blog post
+// DELETE /api/instagram/posts/[id] - Delete post
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -82,14 +74,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // First, clear any foreign key references from blogIdeas
-    await db
-      .update(blogIdeas)
-      .set({ createdPostId: null })
-      .where(eq(blogIdeas.createdPostId, id));
-
-    // Now delete the blog post
-    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+    await db.delete(instagramPosts).where(eq(instagramPosts.id, id));
 
     return NextResponse.json({ message: "Post deleted successfully" });
   } catch (error) {
