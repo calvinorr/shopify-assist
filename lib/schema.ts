@@ -124,3 +124,15 @@ export const blogIdeas = sqliteTable("blog_ideas", {
   usedAt: integer("used_at", { mode: "timestamp" }),
   createdPostId: text("created_post_id").references(() => blogPosts.id), // Links to blog post if used
 });
+
+// Google OAuth tokens for Search Console integration
+export const googleTokens = sqliteTable("google_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").references(() => users.id).notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  scope: text("scope").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});

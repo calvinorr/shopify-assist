@@ -10,10 +10,13 @@ import {
   Eye,
   Heart,
   BarChart3,
+  Search,
+  Link,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   AreaChart,
   Area,
@@ -73,7 +76,10 @@ interface ChartDataPoint {
   orders: number;
 }
 
+type TabType = "overview" | "seo" | "content";
+
 export default function AnalyticsPage() {
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [overview, setOverview] = useState<OverviewResponse | null>(null);
   const [productsData, setProductsData] = useState<ProductsResponse | null>(null);
   const [contentData, setContentData] = useState<ContentResponse | null>(null);
@@ -137,7 +143,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen p-8">
       {/* Page Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1
           className="text-3xl font-light tracking-tight mb-2"
           style={{ color: "var(--text-primary)", fontFamily: "Georgia, serif" }}
@@ -149,470 +155,298 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {loading ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : (
-          <>
-            <StatCard
-              title="Total Products"
-              value={overview?.totalProducts || 0}
-              icon={Package}
-              color="indigo"
-              subtitle={`${overview?.productsByStatus.inStock || 0} in stock`}
-            />
-            <StatCard
-              title="Inventory Value"
-              value={`£${((overview?.totalInventoryValue || 0) / 1000).toFixed(1)}k`}
-              icon={DollarSign}
-              color="weld"
-              subtitle={`${overview?.productsByStatus.outOfStock || 0} out of stock`}
-            />
-            <StatCard
-              title="Total Revenue"
-              value={`£${(salesData?.totalRevenue || 0).toFixed(0)}`}
-              icon={TrendingUp}
-              color="walnut"
-              subtitle={`${salesData?.totalOrders || 0} orders (30d)`}
-            />
-            <StatCard
-              title="Content Created"
-              value={totalBlogPosts + totalInstagramPosts}
-              icon={FileText}
-              color="madder"
-              subtitle={`${totalBlogPosts} blog, ${totalInstagramPosts} Instagram`}
-            />
-          </>
-        )}
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Sales/Inventory Chart */}
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div
-              className="rounded-lg p-2"
-              style={{ backgroundColor: "var(--indigo-light)" }}
-            >
-              <TrendingUp className="w-5 h-5" style={{ color: "var(--indigo)" }} />
-            </div>
-            <div>
-              <h2
-                className="text-lg font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              >
-                Sales & Inventory Trend
-              </h2>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Last 30 days
-              </p>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="h-64 flex items-center justify-center">
-              <Skeleton className="w-full h-full" />
-            </div>
-          ) : chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="rgb(61, 90, 128)"
-                      stopOpacity={0.3}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="rgb(61, 90, 128)"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                  <linearGradient id="inventoryGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="5%"
-                      stopColor="rgb(201, 166, 107)"
-                      stopOpacity={0.3}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="rgb(201, 166, 107)"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fill: "var(--text-muted)", fontSize: 12 }}
-                  stroke="var(--card-border)"
-                />
-                <YAxis
-                  tick={{ fill: "var(--text-muted)", fontSize: 12 }}
-                  stroke="var(--card-border)"
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--card-bg)",
-                    border: "1px solid var(--card-border)",
-                    borderRadius: "8px",
-                    color: "var(--text-primary)",
-                  }}
-                />
-                <Legend
-                  wrapperStyle={{ color: "var(--text-secondary)", fontSize: "14px" }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="rgb(61, 90, 128)"
-                  fillOpacity={1}
-                  fill="url(#salesGradient)"
-                  name="Revenue (£)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="orders"
-                  stroke="rgb(201, 166, 107)"
-                  fillOpacity={1}
-                  fill="url(#inventoryGradient)"
-                  name="Orders"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                No chart data available
-              </p>
-            </div>
-          )}
-        </Card>
-
-        {/* Content Performance Chart */}
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div
-              className="rounded-lg p-2"
-              style={{ backgroundColor: "var(--walnut-light)" }}
-            >
-              <BarChart3 className="w-5 h-5" style={{ color: "var(--walnut)" }} />
-            </div>
-            <div>
-              <h2
-                className="text-lg font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              >
-                Content Overview
-              </h2>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Blog and Instagram metrics
-              </p>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="h-64 flex items-center justify-center">
-              <Skeleton className="w-full h-full" />
-            </div>
-          ) : contentData ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart
-                data={[
-                  {
-                    name: "Blog",
-                    published: getBlogCount("published"),
-                    drafts: getBlogCount("draft"),
-                  },
-                  {
-                    name: "Instagram",
-                    posted: getInstagramCount("posted"),
-                    drafts: getInstagramCount("draft"),
-                  },
-                ]}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: "var(--text-muted)", fontSize: 12 }}
-                  stroke="var(--card-border)"
-                />
-                <YAxis
-                  tick={{ fill: "var(--text-muted)", fontSize: 12 }}
-                  stroke="var(--card-border)"
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--card-bg)",
-                    border: "1px solid var(--card-border)",
-                    borderRadius: "8px",
-                    color: "var(--text-primary)",
-                  }}
-                />
-                <Legend
-                  wrapperStyle={{ color: "var(--text-secondary)", fontSize: "14px" }}
-                />
-                <Bar
-                  dataKey="published"
-                  fill="rgb(61, 90, 128)"
-                  name="Published"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="drafts"
-                  fill="rgb(201, 166, 107)"
-                  name="Drafts"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-64 flex items-center justify-center">
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                No content data available
-              </p>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* Inventory Capital Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="rounded-lg p-2"
-              style={{ backgroundColor: "var(--weld-light)" }}
-            >
-              <DollarSign className="w-5 h-5" style={{ color: "var(--weld)" }} />
-            </div>
-            <div>
-              <h2
-                className="text-xl font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              >
-                Inventory Capital
-              </h2>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                Stock value tied up in products — consider promoting or discounting
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-semibold" style={{ color: "var(--weld)" }}>
-              £{((overview?.totalInventoryValue || 0)).toFixed(0)}
-            </p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>total tied up</p>
-          </div>
+      {/* Tab Navigation */}
+      <div className="mb-6">
+        <div
+          className="inline-flex rounded-lg p-1 gap-1"
+          style={{ backgroundColor: "var(--background)" }}
+        >
+          <TabButton
+            label="Overview"
+            active={activeTab === "overview"}
+            onClick={() => setActiveTab("overview")}
+          />
+          <TabButton
+            label="SEO"
+            active={activeTab === "seo"}
+            onClick={() => setActiveTab("seo")}
+          />
+          <TabButton
+            label="Content"
+            active={activeTab === "content"}
+            onClick={() => setActiveTab("content")}
+          />
         </div>
+      </div>
 
-        <Card className="overflow-hidden">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ) : productsData?.topProducts && productsData.topProducts.length > 0 ? (
-            <div className="divide-y" style={{ borderColor: "var(--card-border)" }}>
-              {/* Table Header */}
+      {/* Tab Content */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {loading ? (
+              <>
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+              </>
+            ) : (
+              <>
+                <StatCard
+                  title="Total Products"
+                  value={overview?.totalProducts || 0}
+                  icon={Package}
+                  color="indigo"
+                  subtitle={`${overview?.productsByStatus.inStock || 0} in stock`}
+                />
+                <StatCard
+                  title="Inventory Value"
+                  value={`£${((overview?.totalInventoryValue || 0) / 1000).toFixed(1)}k`}
+                  icon={DollarSign}
+                  color="weld"
+                  subtitle={`${overview?.productsByStatus.outOfStock || 0} out of stock`}
+                />
+                <StatCard
+                  title="Total Revenue"
+                  value={`£${(salesData?.totalRevenue || 0).toFixed(0)}`}
+                  icon={TrendingUp}
+                  color="walnut"
+                  subtitle={`${salesData?.totalOrders || 0} orders (30d)`}
+                />
+                <StatCard
+                  title="Content Created"
+                  value={totalBlogPosts + totalInstagramPosts}
+                  icon={FileText}
+                  color="madder"
+                  subtitle={`${totalBlogPosts} blog, ${totalInstagramPosts} Instagram`}
+                />
+              </>
+            )}
+          </div>
+
+          {/* Sales Chart - Single, most useful chart */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
               <div
-                className="px-6 py-3 grid grid-cols-12 gap-4 text-xs font-medium"
-                style={{
-                  backgroundColor: "var(--background)",
-                  color: "var(--text-muted)",
-                }}
+                className="rounded-lg p-2"
+                style={{ backgroundColor: "var(--indigo-light)" }}
               >
-                <div className="col-span-5">Product</div>
-                <div className="col-span-2 text-right">Price</div>
-                <div className="col-span-2 text-right">Stock Value</div>
-                <div className="col-span-2 text-right">Inventory</div>
-                <div className="col-span-1 text-right">Color</div>
+                <TrendingUp className="w-5 h-5" style={{ color: "var(--indigo)" }} />
               </div>
-
-              {/* Table Rows */}
-              {productsData.topProducts.slice(0, 10).map((product) => (
-                <div
-                  key={product.id}
-                  className="px-6 py-4 grid grid-cols-12 gap-4 items-center hover:bg-opacity-50 transition-colors"
-                  style={{
-                    backgroundColor: "transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "var(--background)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                  }}
+              <div>
+                <h2
+                  className="text-lg font-semibold"
+                  style={{ color: "var(--text-primary)" }}
                 >
-                  <div className="col-span-5">
-                    <p
-                      className="text-sm font-medium truncate"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {product.name}
-                    </p>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                      £{product.price.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-                      £{product.inventoryValue.toFixed(0)}
-                    </p>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <Badge
-                      variant={product.inventory > 10 ? "success" : "warning"}
-                      size="sm"
-                    >
-                      {product.inventory} units
-                    </Badge>
-                  </div>
-                  <div className="col-span-1 text-right">
-                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {product.color || "—"}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  Sales & Orders Trend
+                </h2>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Last 30 days
+                </p>
+              </div>
             </div>
-          ) : (
-            <div className="p-8 text-center">
-              <Package
-                className="w-10 h-10 mx-auto mb-3"
-                style={{ color: "var(--text-muted)" }}
-              />
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                No product data available
-              </p>
-            </div>
-          )}
-        </Card>
-      </div>
 
-      {/* Content Metrics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Blog Metrics */}
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div
-              className="rounded-lg p-2"
-              style={{ backgroundColor: "var(--indigo-light)" }}
-            >
-              <FileText className="w-5 h-5" style={{ color: "var(--indigo)" }} />
-            </div>
-            <h2
-              className="text-lg font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Blog Performance
-            </h2>
-          </div>
+            {loading ? (
+              <div className="h-64 flex items-center justify-center">
+                <Skeleton className="w-full h-full" />
+              </div>
+            ) : chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor="rgb(61, 90, 128)"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="rgb(61, 90, 128)"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                    <linearGradient id="inventoryGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="5%"
+                        stopColor="rgb(201, 166, 107)"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="95%"
+                        stopColor="rgb(201, 166, 107)"
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "var(--text-muted)", fontSize: 12 }}
+                    stroke="var(--card-border)"
+                  />
+                  <YAxis
+                    tick={{ fill: "var(--text-muted)", fontSize: 12 }}
+                    stroke="var(--card-border)"
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--card-bg)",
+                      border: "1px solid var(--card-border)",
+                      borderRadius: "8px",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{ color: "var(--text-secondary)", fontSize: "14px" }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="rgb(61, 90, 128)"
+                    fillOpacity={1}
+                    fill="url(#salesGradient)"
+                    name="Revenue (£)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="orders"
+                    stroke="rgb(201, 166, 107)"
+                    fillOpacity={1}
+                    fill="url(#inventoryGradient)"
+                    name="Orders"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex items-center justify-center">
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  No chart data available
+                </p>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
 
-          {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-            </div>
-          ) : contentData ? (
-            <div className="space-y-4">
-              <MetricRow
-                label="Total Posts"
-                value={totalBlogPosts}
-                icon={FileText}
-              />
-              <MetricRow
-                label="Published"
-                value={getBlogCount("published")}
-                icon={Eye}
-              />
-              <MetricRow
-                label="Drafts"
-                value={getBlogCount("draft")}
-                icon={FileText}
-              />
-              <MetricRow
-                label="In Review"
-                value={getBlogCount("review")}
-                icon={Eye}
-              />
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                No blog data available
-              </p>
-            </div>
-          )}
-        </Card>
+      {activeTab === "seo" && (
+        <SEOTab />
+      )}
 
-        {/* Instagram Metrics */}
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div
-              className="rounded-lg p-2"
-              style={{ backgroundColor: "var(--madder-light)" }}
-            >
-              <Instagram className="w-5 h-5" style={{ color: "var(--madder)" }} />
+      {activeTab === "content" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Blog Metrics */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="rounded-lg p-2"
+                style={{ backgroundColor: "var(--indigo-light)" }}
+              >
+                <FileText className="w-5 h-5" style={{ color: "var(--indigo)" }} />
+              </div>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Blog Performance
+              </h2>
             </div>
-            <h2
-              className="text-lg font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Instagram Performance
-            </h2>
-          </div>
 
-          {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : contentData ? (
+              <div className="space-y-4">
+                <MetricRow
+                  label="Total Posts"
+                  value={totalBlogPosts}
+                  icon={FileText}
+                />
+                <MetricRow
+                  label="Published"
+                  value={getBlogCount("published")}
+                  icon={Eye}
+                />
+                <MetricRow
+                  label="Drafts"
+                  value={getBlogCount("draft")}
+                  icon={FileText}
+                />
+                <MetricRow
+                  label="In Review"
+                  value={getBlogCount("review")}
+                  icon={Eye}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  No blog data available
+                </p>
+              </div>
+            )}
+          </Card>
+
+          {/* Instagram Metrics */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div
+                className="rounded-lg p-2"
+                style={{ backgroundColor: "var(--madder-light)" }}
+              >
+                <Instagram className="w-5 h-5" style={{ color: "var(--madder)" }} />
+              </div>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Instagram Performance
+              </h2>
             </div>
-          ) : contentData ? (
-            <div className="space-y-4">
-              <MetricRow
-                label="Total Posts"
-                value={totalInstagramPosts}
-                icon={Instagram}
-              />
-              <MetricRow
-                label="Posted"
-                value={getInstagramCount("posted")}
-                icon={Eye}
-              />
-              <MetricRow
-                label="Drafts"
-                value={getInstagramCount("draft")}
-                icon={FileText}
-              />
-              <MetricRow
-                label="Scheduled"
-                value={getInstagramCount("scheduled")}
-                icon={Heart}
-              />
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                No Instagram data available
-              </p>
-            </div>
-          )}
-        </Card>
-      </div>
+
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : contentData ? (
+              <div className="space-y-4">
+                <MetricRow
+                  label="Total Posts"
+                  value={totalInstagramPosts}
+                  icon={Instagram}
+                />
+                <MetricRow
+                  label="Posted"
+                  value={getInstagramCount("posted")}
+                  icon={Eye}
+                />
+                <MetricRow
+                  label="Drafts"
+                  value={getInstagramCount("draft")}
+                  icon={FileText}
+                />
+                <MetricRow
+                  label="Scheduled"
+                  value={getInstagramCount("scheduled")}
+                  icon={Heart}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                  No Instagram data available
+                </p>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
@@ -697,6 +531,247 @@ function MetricRow({ label, value, icon: Icon }: MetricRowProps) {
       <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
         {value}
       </span>
+    </div>
+  );
+}
+
+interface TabButtonProps {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function TabButton({ label, active, onClick }: TabButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-4 py-2 text-sm font-medium rounded-md transition-all"
+      style={{
+        backgroundColor: active ? "var(--card-bg)" : "transparent",
+        color: active ? "var(--text-primary)" : "var(--text-muted)",
+        border: active ? "1px solid var(--card-border)" : "1px solid transparent",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+// SEO Tab Component with Google Search Console integration
+interface SEOData {
+  connected: boolean;
+  data?: {
+    totals: {
+      clicks: number;
+      impressions: number;
+      ctr: number;
+      position: number;
+    };
+    rows: Array<{
+      keys: string[];
+      clicks: number;
+      impressions: number;
+      ctr: number;
+      position: number;
+    }>;
+  };
+}
+
+function SEOTab() {
+  const [seoData, setSeoData] = useState<SEOData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
+  async function checkConnection() {
+    try {
+      const res = await fetch("/api/analytics/seo?check=true");
+      if (res.ok) {
+        const data = await res.json();
+        setSeoData({ connected: data.connected });
+
+        if (data.connected) {
+          fetchSEOData();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to check SEO connection:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchSEOData() {
+    try {
+      const res = await fetch("/api/analytics/seo?siteUrl=https://herbariumdyeworks.com/&dimensions=query&rowLimit=10");
+      if (res.ok) {
+        const data = await res.json();
+        setSeoData({ connected: true, data });
+      }
+    } catch (error) {
+      console.error("Failed to fetch SEO data:", error);
+    }
+  }
+
+  function handleConnect() {
+    setConnecting(true);
+    window.location.href = "/api/analytics/seo/connect";
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: "60vh" }}>
+        <Skeleton className="w-96 h-64" />
+      </div>
+    );
+  }
+
+  if (!seoData?.connected) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: "60vh" }}>
+        <Card className="p-12 max-w-md w-full text-center">
+          <div
+            className="rounded-full p-4 w-16 h-16 mx-auto mb-6"
+            style={{ backgroundColor: "var(--indigo-light)" }}
+          >
+            <Search className="w-8 h-8" style={{ color: "var(--indigo)" }} />
+          </div>
+          <h2
+            className="text-xl font-semibold mb-3"
+            style={{ color: "var(--text-primary)" }}
+          >
+            SEO Analytics
+          </h2>
+          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+            Connect Google Search Console to track search rankings, impressions, and click-through rates.
+          </p>
+          <Button
+            variant="primary"
+            className="gap-2"
+            onClick={handleConnect}
+            disabled={connecting}
+          >
+            <Link className="w-4 h-4" />
+            {connecting ? "Connecting..." : "Connect Google Search Console"}
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Connected - show SEO data
+  return (
+    <div className="space-y-6">
+      {/* SEO Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Clicks"
+          value={seoData.data?.totals.clicks.toLocaleString() || "0"}
+          icon={TrendingUp}
+          color="indigo"
+          subtitle="Last 28 days"
+        />
+        <StatCard
+          title="Impressions"
+          value={seoData.data?.totals.impressions.toLocaleString() || "0"}
+          icon={Eye}
+          color="weld"
+          subtitle="Search appearances"
+        />
+        <StatCard
+          title="Avg CTR"
+          value={`${((seoData.data?.totals.ctr || 0) * 100).toFixed(1)}%`}
+          icon={TrendingUp}
+          color="walnut"
+          subtitle="Click-through rate"
+        />
+        <StatCard
+          title="Avg Position"
+          value={(seoData.data?.totals.position || 0).toFixed(1)}
+          icon={Search}
+          color="madder"
+          subtitle="In search results"
+        />
+      </div>
+
+      {/* Top Queries Table */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div
+              className="rounded-lg p-2"
+              style={{ backgroundColor: "var(--indigo-light)" }}
+            >
+              <Search className="w-5 h-5" style={{ color: "var(--indigo)" }} />
+            </div>
+            <div>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Top Search Queries
+              </h2>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                What people search to find you
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {seoData.data?.rows && seoData.data.rows.length > 0 ? (
+          <div className="divide-y" style={{ borderColor: "var(--card-border)" }}>
+            <div
+              className="grid grid-cols-12 gap-4 py-2 text-xs font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <div className="col-span-6">Query</div>
+              <div className="col-span-2 text-right">Clicks</div>
+              <div className="col-span-2 text-right">Impressions</div>
+              <div className="col-span-2 text-right">Position</div>
+            </div>
+            {seoData.data.rows.map((row, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-12 gap-4 py-3 items-center"
+              >
+                <div
+                  className="col-span-6 text-sm truncate"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {row.keys[0]}
+                </div>
+                <div
+                  className="col-span-2 text-right text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {row.clicks}
+                </div>
+                <div
+                  className="col-span-2 text-right text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {row.impressions}
+                </div>
+                <div
+                  className="col-span-2 text-right text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {row.position.toFixed(1)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              No search data available yet
+            </p>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

@@ -41,3 +41,33 @@ export interface SeasonalTrend {
   topColors: string[];
   revenueChange: number;
 }
+
+// Google Search Console Types
+export interface SearchAnalyticsRow {
+  keys?: string[];
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
+
+export interface SearchAnalyticsData {
+  siteUrl: string;
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+  aggregated: {
+    totalClicks: number;
+    totalImpressions: number;
+    averageCtr: number;
+    averagePosition: number;
+  };
+  rows: SearchAnalyticsRow[];
+  totalRows: number;
+}
+
+export interface GoogleSite {
+  siteUrl: string;
+  permissionLevel: string;
+}
