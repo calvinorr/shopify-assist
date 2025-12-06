@@ -12,29 +12,29 @@ Prepare the application for production deployment with proper security, authenti
 ## Acceptance Criteria
 
 ### Security Audit
-- [ ] Review all API routes for authentication checks
-- [ ] Ensure no sensitive data exposed in client bundles
-- [ ] Validate environment variable usage (no secrets in code)
-- [ ] Check for common vulnerabilities (XSS, CSRF, injection)
-- [ ] Review CORS and CSP headers
-- [ ] Audit third-party dependencies for vulnerabilities (`npm audit`)
+- [x] Review all API routes for authentication checks
+- [x] Ensure no sensitive data exposed in client bundles
+- [x] Validate environment variable usage (no secrets in code)
+- [x] Check for common vulnerabilities (XSS, CSRF, injection)
+- [ ] Review CORS and CSP headers (deferred - Vercel handles basics)
+- [x] Audit third-party dependencies for vulnerabilities (`npm audit`)
 
 ### Authentication
-- [ ] Disable `DEV_BYPASS_AUTH` mode
-- [ ] Configure NextAuth for production
-- [ ] Set up proper auth provider (Google OAuth or similar)
-- [ ] Implement session management
-- [ ] Add protected route middleware
-- [ ] Test login/logout flow end-to-end
+- [ ] Disable `DEV_BYPASS_AUTH` mode (do in Vercel prod env)
+- [x] Configure NextAuth for production (Credentials provider)
+- [x] Set up proper auth provider (Email/Password with allowlist)
+- [x] Implement session management (JWT strategy)
+- [x] Add protected route middleware (requireAuth on all API routes)
+- [ ] Test login/logout flow end-to-end (needs allowed email seeded)
 
 ### Testing
-- [ ] Run full build (`npm run build`) - zero errors
-- [ ] Test all pages render correctly
-- [ ] Test all API endpoints respond correctly
-- [ ] Verify database connectivity
-- [ ] Test Shopify API integration
-- [ ] Test Gemini AI integration
-- [ ] Mobile responsiveness check
+- [x] Run full build (`npm run build`) - zero errors
+- [x] Test all pages render correctly (dashboard, blog, instagram, products, login)
+- [x] Test all API endpoints respond correctly
+- [x] Verify database connectivity (Turso)
+- [x] Test Shopify API integration (298 products synced)
+- [x] Test Gemini AI integration (working)
+- [ ] Mobile responsiveness check (manual verification needed)
 
 ### Deployment Prep
 - [ ] Verify all required env vars documented
