@@ -4,10 +4,20 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   email: text("email").unique().notNull(),
+  passwordHash: text("password_hash"), // bcrypt hashed password
   name: text("name"),
   image: text("image"),
+  isAdmin: integer("is_admin", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Allowed emails for registration (admin-controlled access)
+export const allowedEmails = sqliteTable("allowed_emails", {
+  id: text("id").primaryKey(),
+  email: text("email").unique().notNull(),
+  addedBy: text("added_by"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 // Products synced from Shopify

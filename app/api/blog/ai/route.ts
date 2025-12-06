@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/gemini";
+import { requireAuth } from "@/lib/auth";
 
 const SYSTEM_INSTRUCTION = `You are a content assistant for Herbarium Dyeworks, an artisan hand-dyed wool business specializing in natural dyes and hand-dyed yarn for knitters and fiber artists.`;
 
@@ -20,6 +21,7 @@ function stripHtml(html: string): string {
  */
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth();
     const body = await request.json();
     const { action, content, title } = body;
 
@@ -128,6 +130,9 @@ Return ONLY the tags as a JSON array: ["tag-1", "tag-2", "tag-3"]`;
       { status: 400 }
     );
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Blog AI API error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },

@@ -3,10 +3,12 @@ import { db } from "@/lib/db";
 import { blogPosts } from "@/lib/schema";
 import { eq, desc, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { requireAuth } from "@/lib/auth";
 
 // GET /api/blog - List all blog posts
 export async function GET() {
   try {
+    await requireAuth();
     const posts = await db
       .select({
         id: blogPosts.id,
@@ -23,6 +25,9 @@ export async function GET() {
 
     return NextResponse.json({ posts });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -31,6 +36,7 @@ export async function GET() {
 // POST /api/blog - Create new blog post
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth();
     const body = await request.json();
     const { title, content, excerpt, tags, status = "draft", scheduledAt } = body;
 
@@ -59,6 +65,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ id, slug, message: "Post created successfully" });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -67,6 +76,7 @@ export async function POST(request: NextRequest) {
 // DELETE /api/blog - Bulk delete blog posts
 export async function DELETE(request: NextRequest) {
   try {
+    await requireAuth();
     const body = await request.json();
     const { ids } = body;
 
@@ -81,6 +91,9 @@ export async function DELETE(request: NextRequest) {
       count: ids.length
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -89,6 +102,7 @@ export async function DELETE(request: NextRequest) {
 // PATCH /api/blog - Bulk update blog post status
 export async function PATCH(request: NextRequest) {
   try {
+    await requireAuth();
     const body = await request.json();
     const { ids, status } = body;
 
@@ -113,6 +127,9 @@ export async function PATCH(request: NextRequest) {
       count: ids.length
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

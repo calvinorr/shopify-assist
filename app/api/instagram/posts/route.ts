@@ -3,10 +3,12 @@ import { db } from "@/lib/db";
 import { instagramPosts } from "@/lib/schema";
 import { desc, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { requireAuth } from "@/lib/auth";
 
 // GET /api/instagram/posts - List all posts
 export async function GET() {
   try {
+    await requireAuth();
     const posts = await db
       .select()
       .from(instagramPosts)
@@ -21,6 +23,9 @@ export async function GET() {
 
     return NextResponse.json({ posts: parsed });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -29,6 +34,7 @@ export async function GET() {
 // POST /api/instagram/posts - Create new post
 export async function POST(request: NextRequest) {
   try {
+    await requireAuth();
     const body = await request.json();
     const { caption, hashtags, imageUrls, productId, status = "draft", scheduledTime } = body;
 
@@ -48,6 +54,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ id, message: "Post created successfully" });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

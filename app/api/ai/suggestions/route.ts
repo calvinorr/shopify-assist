@@ -3,6 +3,7 @@ import { generatePostIdeas } from "@/lib/gemini";
 import { db } from "@/lib/db";
 import { products, aiSuggestions } from "@/lib/schema";
 import { desc, sql, eq } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth";
 
 function getSeasonalContext(): string {
   const month = new Date().getMonth();
@@ -88,6 +89,7 @@ Format as JSON array:
 // GET - Load cached suggestions from database (fast, no AI)
 export async function GET() {
   try {
+    await requireAuth();
     // Load cached suggestions from database
     const instagramRows = await db
       .select()
@@ -130,6 +132,9 @@ export async function GET() {
       isEmpty: instagram.length === 0 && blog.length === 0,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to load cached suggestions:", error);
     return NextResponse.json({
       instagram: [],
@@ -143,6 +148,7 @@ export async function GET() {
 // POST - Generate new suggestions and save to database
 export async function POST() {
   try {
+    await requireAuth();
     // Fetch product data for context
     const colorStats = await db
       .select({
@@ -210,6 +216,9 @@ export async function POST() {
       isEmpty: false,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Authentication required") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("AI suggestions generation error:", error);
     return NextResponse.json(
       { error: "Failed to generate suggestions" },
