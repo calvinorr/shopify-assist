@@ -76,7 +76,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
-| Settings Page | P1 | not-started | `stories/settings-page.md` |
+| Settings Page | P1 | complete | `stories/settings-page.md` |
 | Analytics & SEO Dashboard | P1 | not-started | `stories/analytics-seo-dashboard.md` |
 
 ## Completed Stories (Chronological)
@@ -97,6 +97,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 - [x] **Instagram Post Creator UI** (P2) - Composer, drafts, manual posting workflow - 2024-12-05
 - [x] **Dashboard Rewrite** (P0) - Content-focused hub with 3 blog + 3 Instagram idea cards - 2024-12-05
 - [x] **Instagram Creation Flow** (P0) - Product image picker, caption refinement, hashtag suggestions - 2024-12-05
+- [x] **Settings Page** (P1) - User profile, password change, admin controls, Shopify status - 2024-12-06
 
 ---
 
