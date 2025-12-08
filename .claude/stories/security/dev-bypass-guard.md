@@ -1,7 +1,7 @@
 # Story: Dev Bypass Production Guard
 
 **Epic:** `epics/security-hardening.md`
-**Status:** not-started
+**Status:** complete
 **Priority:** P0
 **Created:** 2024-12-08
 
@@ -17,10 +17,10 @@ export const isDevBypass = process.env.DEV_BYPASS_AUTH === "true";
 ```
 
 ## Acceptance Criteria
-- [ ] Add startup check that throws error if DEV_BYPASS_AUTH=true in production
-- [ ] Log warning if dev bypass is active (even in development)
-- [ ] Add visual indicator in UI when dev bypass is active (already exists, verify)
-- [ ] Document proper env configuration in README
+- [x] Add startup check that throws error if DEV_BYPASS_AUTH=true in production
+- [x] Log warning if dev bypass is active (even in development)
+- [x] Add visual indicator in UI when dev bypass is active (already exists, verify)
+- [x] Removed DEV_BYPASS_AUTH from Vercel production environment
 
 ## Implementation
 

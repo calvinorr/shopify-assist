@@ -22,6 +22,28 @@ const DEV_SESSION: Session = {
 // Check if dev bypass is enabled
 export const isDevBypass = process.env.DEV_BYPASS_AUTH === "true";
 
+// Track if we've shown the dev bypass warning
+let devBypassWarningShown = false;
+
+// SECURITY: Runtime check to prevent dev bypass in production
+export function assertNoDevBypassInProduction(): void {
+  if (isDevBypass && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "SECURITY ERROR: DEV_BYPASS_AUTH cannot be enabled in production! " +
+      "Remove this environment variable before deploying."
+    );
+  }
+
+  // Show warning once in development
+  if (isDevBypass && !devBypassWarningShown) {
+    devBypassWarningShown = true;
+    console.warn(
+      "\n⚠️  WARNING: DEV_BYPASS_AUTH is enabled - authentication is bypassed!\n" +
+      "   This should NEVER be enabled in production.\n"
+    );
+  }
+}
+
 const authConfig: NextAuthConfig = {
   providers: [
     Credentials({
@@ -66,6 +88,9 @@ const authConfig: NextAuthConfig = {
   ],
   callbacks: {
     authorized({ auth, request }) {
+      // Runtime security check
+      assertNoDevBypassInProduction();
+
       // In dev bypass mode, always authorize
       if (isDevBypass) {
         return true;
@@ -102,6 +127,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
 
 // Helper to get current user (works in both dev and prod)
 export async function getCurrentUser(): Promise<User | null> {
+  // Runtime security check
+  assertNoDevBypassInProduction();
+
   if (isDevBypass) {
     return DEV_USER;
   }
