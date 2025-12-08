@@ -10,7 +10,9 @@ import {
   Settings,
   Palette,
   Leaf,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -99,9 +101,35 @@ export function Sidebar() {
         </div>
       </nav>
 
+      {/* Logout Button */}
+      <div
+        className="px-4 py-4 border-t"
+        style={{ borderColor: "var(--sidebar-hover)" }}
+      >
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 hover:translate-x-0.5"
+          style={{
+            backgroundColor: "transparent",
+            color: "var(--sidebar-muted)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "var(--sidebar-hover)";
+            e.currentTarget.style.color = "var(--sidebar-fg)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "var(--sidebar-muted)";
+          }}
+        >
+          <LogOut className="h-5 w-5" />
+          Log out
+        </button>
+      </div>
+
       {/* Dev Mode Banner */}
       {process.env.NODE_ENV === "development" && (
-        <div className="p-4">
+        <div className="p-4 pt-0">
           <div
             className="rounded-lg p-3 text-xs"
             style={{
