@@ -1,13 +1,35 @@
-# Story: Mobile App for Instagram Posting
+# Story: Mobile Experience
 
 **Epic:** See `.claude/epic.md`
 **Status:** backlog
 **Priority:** P3
 **Created:** 2024-12-03
-**Updated:** 2024-12-03
+**Updated:** 2024-12-08
 
 ## Objective
-Create a mobile companion app or PWA to enable direct Instagram posting without requiring Business/Creator account API access.
+Optimize the web app for mobile devices and potentially create a mobile companion app/PWA for on-the-go content management.
+
+---
+
+## Phase 1: Mobile Responsiveness (Web App)
+
+### Acceptance Criteria
+- [ ] Dashboard layout adapts to mobile screens
+- [ ] Sidebar collapses to hamburger menu on mobile
+- [ ] Blog editor usable on tablet/mobile
+- [ ] Instagram composer optimized for touch
+- [ ] Products grid responsive
+- [ ] All forms/modals mobile-friendly
+- [ ] Test on iOS Safari and Android Chrome
+
+### Notes
+- Priority: Low (desktop-first tool)
+- Most users will use desktop for content creation
+- Mobile useful for quick reviews/approvals
+
+---
+
+## Phase 2: PWA for Instagram Posting (Future)
 
 ## Background
 Instagram Graph API requires Business/Creator accounts for direct posting. As an alternative, a mobile app approach could:
