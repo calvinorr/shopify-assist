@@ -4,8 +4,12 @@ import { db } from "@/lib/db";
 import { blogPosts, products } from "@/lib/schema";
 import { desc } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const rateLimitError = rateLimit(request, "ai:scaffold", RATE_LIMITS.ai);
+  if (rateLimitError) return rateLimitError;
+
   try {
     await requireAuth();
     const { title, description, suggestedKeywords } = await request.json();

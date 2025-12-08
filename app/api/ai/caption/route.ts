@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCaptions, generateHashtags } from "@/lib/gemini";
 import { requireAuth } from "@/lib/auth";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const rateLimitError = rateLimit(req, "ai:caption", RATE_LIMITS.ai);
+  if (rateLimitError) return rateLimitError;
+
   try {
     await requireAuth();
     // Parse request body

@@ -5,8 +5,12 @@ import { requireAuth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { validateRequest, changePasswordSchema } from "@/lib/validations";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const rateLimitError = rateLimit(request, "user:password", RATE_LIMITS.password);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const user = await requireAuth();
 

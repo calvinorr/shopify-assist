@@ -1,7 +1,7 @@
 # Story: Rate Limiting Middleware
 
 **Epic:** `epics/security-hardening.md`
-**Status:** not-started
+**Status:** complete
 **Priority:** P0
 **Created:** 2024-12-08
 

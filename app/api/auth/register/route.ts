@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registerUser } from "@/lib/auth";
 import { validateRequest, registerSchema } from "@/lib/validations";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const rateLimitError = rateLimit(request, "auth:register", RATE_LIMITS.auth);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const { data, error } = await validateRequest(request, registerSchema);
     if (error) return error;

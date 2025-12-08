@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { syncProductsToDb } from "@/services/shopify";
 import { requireAuth } from "@/lib/auth";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const rateLimitError = rateLimit(request, "shopify:sync", RATE_LIMITS.sync);
+  if (rateLimitError) return rateLimitError;
+
   try {
     await requireAuth();
     const result = await syncProductsToDb();

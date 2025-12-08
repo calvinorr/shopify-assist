@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { generatePostIdeas } from "@/lib/gemini";
 import { db } from "@/lib/db";
 import { products, aiSuggestions } from "@/lib/schema";
 import { desc, sql, eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 function getSeasonalContext(): string {
   const month = new Date().getMonth();
@@ -146,7 +147,10 @@ export async function GET() {
 }
 
 // POST - Generate new suggestions and save to database
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const rateLimitError = rateLimit(request, "ai:suggestions", RATE_LIMITS.ai);
+  if (rateLimitError) return rateLimitError;
+
   try {
     await requireAuth();
     // Fetch product data for context
