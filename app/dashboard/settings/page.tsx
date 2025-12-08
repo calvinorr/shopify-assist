@@ -545,11 +545,11 @@ function AdminSection({ currentUserId }: { currentUserId: string }) {
 
       if (emailsRes.ok) {
         const data = await emailsRes.json();
-        setAllowedEmails(data.emails || []);
+        setAllowedEmails(data.data || []);
       }
       if (usersRes.ok) {
         const data = await usersRes.json();
-        setUsers(data.users || []);
+        setUsers(data.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch admin data:", error);
