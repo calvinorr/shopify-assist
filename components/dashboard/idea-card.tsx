@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Instagram, Sparkles, ChevronDown, ArrowRight } from "lucide-react";
+import { FileText, Instagram, Sparkles, ChevronDown, ArrowRight, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,8 @@ export interface IdeaCardProps {
   reasoning?: string;
   keywords?: string[];
   href: string;
+  onStartBlog?: () => Promise<void>;
+  isStarting?: boolean;
 }
 
 export function IdeaCard({
@@ -22,6 +24,8 @@ export function IdeaCard({
   reasoning,
   keywords,
   href,
+  onStartBlog,
+  isStarting = false,
 }: IdeaCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -131,18 +135,42 @@ export function IdeaCard({
           </div>
         )}
 
-        {/* CTA Link */}
-        <Link
-          href={href}
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm transition-all duration-200 hover:opacity-90"
-          style={{
-            backgroundColor: accentColor,
-            color: "white",
-          }}
-        >
-          Start {isBlog ? "Writing" : "Creating"}
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+        {/* CTA Button/Link */}
+        {isBlog && onStartBlog ? (
+          <button
+            onClick={onStartBlog}
+            disabled={isStarting}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-70 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: accentColor,
+              color: "white",
+            }}
+          >
+            {isStarting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Creating Draft...
+              </>
+            ) : (
+              <>
+                Start Writing
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        ) : (
+          <Link
+            href={href}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-medium text-sm transition-all duration-200 hover:opacity-90"
+            style={{
+              backgroundColor: accentColor,
+              color: "white",
+            }}
+          >
+            Start Creating
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        )}
       </div>
     </Card>
   );

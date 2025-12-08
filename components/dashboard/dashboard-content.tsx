@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { RefreshCw, Sparkles, FileText, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/layout/header";
 import { IdeaCard } from "./idea-card";
 import { HeaderStats } from "./header-stats";
+import { useToast } from "@/components/ui/toast";
 
 interface BlogIdea {
   title: string;
@@ -31,11 +33,14 @@ interface BlogPost {
 }
 
 export function DashboardContent() {
+  const router = useRouter();
+  const { showToast } = useToast();
   const [blogIdeas, setBlogIdeas] = useState<BlogIdea[]>([]);
   const [instagramIdeas, setInstagramIdeas] = useState<InstagramIdea[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startingBlogIndex, setStartingBlogIndex] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -80,6 +85,43 @@ export function DashboardContent() {
       console.error("Failed to refresh ideas:", error);
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleStartBlogPost = async (idea: BlogIdea, index: number) => {
+    setStartingBlogIndex(index);
+    try {
+      // Call scaffold API to generate blog content
+      const response = await fetch("/api/ai/blog/scaffold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: idea.title,
+          description: idea.description,
+          suggestedKeywords: idea.suggestedKeywords,
+          type: "blog",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to scaffold blog post");
+      }
+
+      const data = await response.json();
+
+      // Remove the used idea from the list
+      setBlogIdeas((prev) => prev.filter((_, i) => i !== index));
+
+      // Navigate to the new post editor
+      router.push(`/dashboard/blog/${data.postId}`);
+    } catch (error) {
+      console.error("Failed to start blog post:", error);
+      showToast(
+        error instanceof Error ? error.message : "Failed to create blog post",
+        "error"
+      );
+      setStartingBlogIndex(null);
     }
   };
 
@@ -193,6 +235,8 @@ export function DashboardContent() {
                 reasoning={idea.reasoning}
                 keywords={idea.suggestedKeywords}
                 href={buildBlogUrl(idea)}
+                onStartBlog={() => handleStartBlogPost(idea, index)}
+                isStarting={startingBlogIndex === index}
               />
             ))}
           </div>
