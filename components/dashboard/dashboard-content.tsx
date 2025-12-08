@@ -46,27 +46,35 @@ export function DashboardContent() {
     try {
       setIsLoading(true);
 
-      const [suggestionsRes, blogRes] = await Promise.all([
+      // Use allSettled so one failure doesn't break everything
+      const results = await Promise.allSettled([
         fetch("/api/ai/suggestions"),
         fetch("/api/blog"),
       ]);
 
-      if (suggestionsRes.ok) {
-        const data = await suggestionsRes.json();
+      // Handle suggestions result
+      if (results[0].status === "fulfilled" && results[0].value.ok) {
+        const data = await results[0].value.json();
         setBlogIdeas(data.blog || []);
         setInstagramIdeas(data.instagram || []);
+      } else if (results[0].status === "rejected") {
+        console.error("Failed to fetch suggestions:", results[0].reason);
       }
 
-      if (blogRes.ok) {
-        const blogData = await blogRes.json();
+      // Handle blog posts result
+      if (results[1].status === "fulfilled" && results[1].value.ok) {
+        const blogData = await results[1].value.json();
         setPosts(blogData.posts || []);
+      } else if (results[1].status === "rejected") {
+        console.error("Failed to fetch blog posts:", results[1].reason);
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
+      showToast("Failed to load dashboard data", "error");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     fetchData();

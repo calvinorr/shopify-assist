@@ -1,7 +1,7 @@
 # Story: Consistent Error Handling
 
 **Epic:** `epics/security-hardening.md`
-**Status:** not-started
+**Status:** complete
 **Priority:** P1
 **Created:** 2024-12-08
 
