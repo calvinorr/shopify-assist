@@ -49,6 +49,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Blog Command Center | P0 | complete | `stories/blog-command-center.md` |
 | Blog Post UX Design | P1 | complete | `stories/blog-post-ux-design.md` |
 | Blog Polish & Refinements | P1 | complete | `stories/blog-polish.md` |
+| Blog New Post Consistency | P0 | complete | `stories/blog-new-post-consistency.md` |
 
 ### Phase 4: Analytics Loop - PARTIAL
 
@@ -99,6 +100,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 - [x] **Instagram Creation Flow** (P0) - Product image picker, caption refinement, hashtag suggestions - 2024-12-05
 - [x] **Settings Page** (P1) - User profile, password change, admin controls, Shopify status - 2024-12-06
 - [x] **Analytics & SEO Dashboard** (P1) - Tabbed layout, Shopify sales data, Google Search Console integration - 2024-12-06
+- [x] **Blog New Post Consistency** (P0) - Dashboard → Blog page with AI ideas, "start blank" option - 2024-12-08
 
 ---
 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Lightbulb, RefreshCw, X, Loader2, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { Lightbulb, RefreshCw, X, Loader2, ArrowRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface BlogIdea {
@@ -175,10 +176,20 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
           <p className="mb-6" style={{ color: "var(--text-muted)" }}>
             Generate AI-powered blog ideas based on your Shopify products
           </p>
-          <Button variant="primary" size="md" onClick={fetchIdeas}>
-            <Lightbulb className="w-4 h-4 mr-2" />
-            Generate Ideas
-          </Button>
+          <div className="flex flex-col items-center gap-3">
+            <Button variant="primary" size="md" onClick={fetchIdeas}>
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Generate Ideas
+            </Button>
+            <Link
+              href="/dashboard/blog/new"
+              className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:underline"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <FileText className="w-4 h-4" />
+              Or start with a blank post
+            </Link>
+          </div>
         </div>
       </section>
     );
@@ -240,6 +251,21 @@ export function IdeasPanel({ className }: IdeasPanelProps) {
             isStarting={startingId === idea.id}
           />
         ))}
+      </div>
+
+      {/* Start from scratch option */}
+      <div
+        className="mt-4 text-center py-3 rounded-lg"
+        style={{ backgroundColor: "var(--background)" }}
+      >
+        <Link
+          href="/dashboard/blog/new"
+          className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:underline"
+          style={{ color: "var(--text-muted)" }}
+        >
+          <FileText className="w-4 h-4" />
+          Or start with a blank post
+        </Link>
       </div>
     </section>
   );
