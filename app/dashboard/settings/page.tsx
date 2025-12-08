@@ -74,7 +74,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/user/profile");
       if (res.ok) {
         const data = await res.json();
-        setProfile(data);
+        setProfile(data.profile);
       }
     } catch (error) {
       console.error("Failed to fetch profile:", error);
