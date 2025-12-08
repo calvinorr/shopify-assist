@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Sparkles, FileText, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -133,29 +133,37 @@ export function DashboardContent() {
     }
   };
 
-  // Compute content stats
-  const drafts = posts.filter((p) => p.status === "draft");
-  const scheduled = posts.filter(
-    (p) => p.scheduledAt && new Date(p.scheduledAt) > new Date()
+  // Memoized content stats to avoid recalculating on every render
+  const { drafts, scheduled, published } = useMemo(() => {
+    const now = new Date();
+    return {
+      drafts: posts.filter((p) => p.status === "draft"),
+      scheduled: posts.filter(
+        (p) => p.scheduledAt && new Date(p.scheduledAt) > now
+      ),
+      published: posts.filter((p) => p.status === "published"),
+    };
+  }, [posts]);
+
+  // Memoized dates
+  const nextScheduled = useMemo(
+    () =>
+      scheduled
+        .map((p) => p.scheduledAt)
+        .filter(Boolean)
+        .sort()[0],
+    [scheduled]
   );
-  const published = posts.filter((p) => p.status === "published");
 
-  // Get dates
-  const nextScheduled = scheduled
-    .map((p) => p.scheduledAt)
-    .filter(Boolean)
-    .sort()[0];
-
-  const lastPublished = published
-    .map((p) => p.publishedAt)
-    .filter(Boolean)
-    .sort()
-    .reverse()[0];
-
-  // Most recent draft
-  const mostRecentDraft = drafts.sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  )[0];
+  const lastPublished = useMemo(
+    () =>
+      published
+        .map((p) => p.publishedAt)
+        .filter(Boolean)
+        .sort()
+        .reverse()[0],
+    [published]
+  );
 
   // Helper to build URL with query params
   const buildBlogUrl = (idea: BlogIdea) => {
@@ -306,7 +314,7 @@ export function DashboardContent() {
   );
 }
 
-function SkeletonCard() {
+const SkeletonCard = memo(function SkeletonCard() {
   return (
     <div
       className="rounded-xl p-5 animate-pulse"
@@ -341,9 +349,9 @@ function SkeletonCard() {
       />
     </div>
   );
-}
+});
 
-function EmptyState({
+const EmptyState = memo(function EmptyState({
   type,
   onGenerate,
   isGenerating,
@@ -389,4 +397,4 @@ function EmptyState({
       </Button>
     </div>
   );
-}
+});

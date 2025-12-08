@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/schema";
 import { sql } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
+import { cachedResponse, CACHE_DURATIONS } from "@/lib/cache";
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,12 +60,15 @@ export async function GET(request: NextRequest) {
       .select({ count: sql<number>`count(*)` })
       .from(products);
 
-    return NextResponse.json({
-      products: parsed,
-      total: countResult[0]?.count ?? 0,
-      limit,
-      offset,
-    });
+    return cachedResponse(
+      {
+        products: parsed,
+        total: countResult[0]?.count ?? 0,
+        limit,
+        offset,
+      },
+      CACHE_DURATIONS.products
+    );
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

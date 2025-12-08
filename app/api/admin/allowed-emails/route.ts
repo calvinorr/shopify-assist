@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users, allowedEmails } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { validateRequest, allowedEmailSchema } from "@/lib/validations";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Helper to check admin status
 async function requireAdmin() {
@@ -57,6 +58,10 @@ export async function GET() {
 
 // POST /api/admin/allowed-emails - Add a new allowed email
 export async function POST(request: NextRequest) {
+  // Rate limit admin operations
+  const rateLimitError = rateLimit(request, "admin:emails", RATE_LIMITS.write);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const currentUser = await requireAdmin();
 
@@ -91,6 +96,8 @@ export async function POST(request: NextRequest) {
       .from(allowedEmails)
       .where(eq(allowedEmails.id, id))
       .limit(1);
+
+    console.log(`[AUDIT] Admin ${currentUser.email} added ${data.email} to allowlist`);
 
     return NextResponse.json(
       {

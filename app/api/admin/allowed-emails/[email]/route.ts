@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users, allowedEmails } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Helper to check admin status
 async function requireAdmin() {
@@ -29,11 +30,23 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ email: string }> }
 ) {
+  // Rate limit admin operations
+  const rateLimitError = rateLimit(request, "admin:emails", RATE_LIMITS.write);
+  if (rateLimitError) return rateLimitError;
+
   try {
-    await requireAdmin();
+    const currentUser = await requireAdmin();
 
     const { email } = await params;
     const emailToDelete = decodeURIComponent(email).toLowerCase().trim();
+
+    // SAFETY: Prevent self-lockout - can't remove your own email
+    if (currentUser.email?.toLowerCase() === emailToDelete) {
+      return NextResponse.json(
+        { success: false, error: "Cannot remove your own email from allowlist" },
+        { status: 400 }
+      );
+    }
 
     // Check if email exists
     const [existing] = await db
@@ -49,10 +62,21 @@ export async function DELETE(
       );
     }
 
+    // SAFETY: Ensure at least one allowed email remains
+    const [countResult] = await db.select({ total: count() }).from(allowedEmails);
+    if (countResult.total <= 1) {
+      return NextResponse.json(
+        { success: false, error: "Cannot remove the last allowed email" },
+        { status: 400 }
+      );
+    }
+
     // Delete the email
     await db
       .delete(allowedEmails)
       .where(eq(allowedEmails.email, emailToDelete));
+
+    console.log(`[AUDIT] Admin ${currentUser.email} removed ${emailToDelete} from allowlist`);
 
     return NextResponse.json({
       success: true,

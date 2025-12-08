@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { settings, products } from "@/lib/schema";
 import { eq, count } from "drizzle-orm";
+import { cachedResponse, CACHE_DURATIONS } from "@/lib/cache";
 
 export async function GET() {
   try {
@@ -22,12 +23,15 @@ export async function GET() {
     const [result] = await db.select({ count: count() }).from(products);
     const productCount = result?.count || 0;
 
-    return NextResponse.json({
-      connected,
-      storeUrl: "herbariumdyeworks.myshopify.com",
-      lastSyncAt: lastSync?.value ? new Date(lastSync.value).toISOString() : null,
-      productCount,
-    });
+    return cachedResponse(
+      {
+        connected,
+        storeUrl: "herbariumdyeworks.myshopify.com",
+        lastSyncAt: lastSync?.value ? new Date(lastSync.value).toISOString() : null,
+        productCount,
+      },
+      CACHE_DURATIONS.shopifyStatus
+    );
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

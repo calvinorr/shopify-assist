@@ -1,4 +1,6 @@
 const API_VERSION = "2024-10"; // Shopify quarterly version
+const MAX_RETRIES = 3;
+const BASE_RETRY_DELAY = 2000; // 2 seconds
 
 interface ShopifyGraphQLResponse<T> {
   data?: T;
@@ -22,24 +24,40 @@ async function makeShopifyRequest(
 
   const url = `https://${storeDomain}/admin/api/${API_VERSION}/graphql.json`;
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": accessToken,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  // Iterative retry with exponential backoff
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken,
+      },
+      body: JSON.stringify({ query, variables }),
+    });
 
-  // Handle rate limiting with retry
-  if (response.status === 429) {
+    // Success or non-retryable error
+    if (response.status !== 429) {
+      return response;
+    }
+
+    // Rate limited - check if we can retry
+    if (attempt === MAX_RETRIES) {
+      console.error(`Shopify rate limit: max retries (${MAX_RETRIES}) exceeded`);
+      return response; // Return 429 response, let caller handle it
+    }
+
+    // Calculate wait time with exponential backoff + jitter
     const retryAfter = response.headers.get("Retry-After");
-    const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 2000;
+    const baseWait = retryAfter ? parseInt(retryAfter, 10) * 1000 : BASE_RETRY_DELAY;
+    const jitter = Math.random() * 1000; // 0-1 second jitter
+    const waitTime = baseWait * Math.pow(2, attempt) + jitter;
+
+    console.warn(`Shopify rate limited. Retry ${attempt + 1}/${MAX_RETRIES} in ${Math.round(waitTime)}ms`);
     await new Promise((resolve) => setTimeout(resolve, waitTime));
-    return makeShopifyRequest(query, variables);
   }
 
-  return response;
+  // TypeScript safety - should never reach here
+  throw new Error("Unexpected retry loop exit");
 }
 
 export async function shopifyGraphQL<T>(

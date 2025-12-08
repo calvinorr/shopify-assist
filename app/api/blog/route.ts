@@ -5,6 +5,7 @@ import { eq, desc, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAuth } from "@/lib/auth";
 import { validateRequest, createBlogPostSchema } from "@/lib/validations";
+import { cachedResponse, CACHE_DURATIONS } from "@/lib/cache";
 
 // GET /api/blog - List all blog posts
 export async function GET() {
@@ -24,7 +25,7 @@ export async function GET() {
       .from(blogPosts)
       .orderBy(desc(blogPosts.createdAt));
 
-    return NextResponse.json({ posts });
+    return cachedResponse({ posts }, CACHE_DURATIONS.blogList);
   } catch (error) {
     if (error instanceof Error && error.message === "Authentication required") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Header } from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,15 +94,17 @@ export default function ProductsPage() {
     }
   }
 
-  const filteredProducts = products.filter((product) => {
-    if (!searchQuery) return true;
+  // Memoized filtering to avoid recalculating on every render
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery) return products;
     const query = searchQuery.toLowerCase();
-    return (
-      product.name.toLowerCase().includes(query) ||
-      (product.color?.toLowerCase() || "").includes(query) ||
-      product.tags.some((tag) => tag.toLowerCase().includes(query))
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        (product.color?.toLowerCase() || "").includes(query) ||
+        product.tags.some((tag) => tag.toLowerCase().includes(query))
     );
-  });
+  }, [products, searchQuery]);
 
   function clearFilters() {
     setSearchQuery("");
