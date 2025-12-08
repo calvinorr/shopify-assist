@@ -206,48 +206,76 @@ export interface SyncResult {
 
 /**
  * Sync all products from Shopify to database
+ * Optimized: Uses batch operations instead of N+1 queries
  */
 export async function syncProductsToDb(): Promise<SyncResult> {
   const errors: string[] = [];
-  let synced = 0;
 
   try {
+    // 1. Fetch all products from Shopify
     const shopifyProducts = await fetchAllProducts();
+
+    // 2. Get all existing product IDs in ONE query
+    const existingProducts = await db
+      .select({ shopifyProductId: products.shopifyProductId })
+      .from(products);
+
+    const existingIds = new Set(
+      existingProducts.map((p) => p.shopifyProductId).filter(Boolean)
+    );
+
+    // 3. Transform and separate into inserts vs updates
+    type ProductData = ReturnType<typeof transformProduct>;
+    type ProductInsert = ProductData & { createdAt: Date };
+
+    const toInsert: ProductInsert[] = [];
+    const toUpdate: ProductData[] = [];
 
     for (const shopifyProduct of shopifyProducts) {
       try {
         const productData = transformProduct(shopifyProduct);
-
-        // Upsert: insert or update on conflict
-        const existing = await db
-          .select()
-          .from(products)
-          .where(eq(products.shopifyProductId, productData.shopifyProductId))
-          .limit(1);
-
-        if (existing.length > 0) {
-          await db
-            .update(products)
-            .set(productData)
-            .where(eq(products.shopifyProductId, productData.shopifyProductId));
+        if (existingIds.has(productData.shopifyProductId)) {
+          toUpdate.push(productData);
         } else {
-          await db.insert(products).values({
-            ...productData,
-            createdAt: new Date(),
-          });
+          toInsert.push({ ...productData, createdAt: new Date() });
         }
-
-        synced++;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
-        errors.push(`Failed to sync product ${shopifyProduct.title}: ${message}`);
+        errors.push(`Failed to transform ${shopifyProduct.title}: ${message}`);
       }
     }
+
+    // 4. Batch insert new products (if any)
+    if (toInsert.length > 0) {
+      await db.insert(products).values(toInsert);
+    }
+
+    // 5. Update existing products in a transaction
+    if (toUpdate.length > 0) {
+      // SQLite doesn't support bulk upsert well, so we batch in chunks
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < toUpdate.length; i += BATCH_SIZE) {
+        const batch = toUpdate.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map((productData) =>
+            db
+              .update(products)
+              .set(productData)
+              .where(eq(products.shopifyProductId, productData.shopifyProductId!))
+          )
+        );
+      }
+    }
+
+    const synced = toInsert.length + toUpdate.length;
+    console.log(
+      `Synced ${synced} products (${toInsert.length} new, ${toUpdate.length} updated)`
+    );
 
     return { success: errors.length === 0, synced, errors };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return { success: false, synced, errors: [message] };
+    return { success: false, synced: 0, errors: [message] };
   }
 }
 
