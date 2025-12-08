@@ -110,6 +110,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 1. **Instagram OAuth Connection** (P1) - Connect to Instagram Business Account
 
 ### Analytics (Phase 4)
+- **SEO Fix** (P0) - Fix broken SEO analytics connection
 - **Instagram Performance Analytics** (P2) - Track post engagement
 - **Seasonal Pattern Recognition** (P3) - Identify trending colors by season
 

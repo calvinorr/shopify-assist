@@ -561,11 +561,11 @@ function TabButton({ label, active, onClick }: TabButtonProps) {
 interface SEOData {
   connected: boolean;
   data?: {
-    totals: {
-      clicks: number;
-      impressions: number;
-      ctr: number;
-      position: number;
+    aggregated: {
+      totalClicks: number;
+      totalImpressions: number;
+      averageCtr: number;
+      averagePosition: number;
     };
     rows: Array<{
       keys: string[];
@@ -606,7 +606,8 @@ function SEOTab() {
 
   async function fetchSEOData() {
     try {
-      const res = await fetch("/api/analytics/seo?siteUrl=https://herbariumdyeworks.com/&dimensions=query&rowLimit=10");
+      // Use domain property format for better data coverage
+      const res = await fetch("/api/analytics/seo?siteUrl=sc-domain:herbariumdyeworks.com&dimensions=query&rowLimit=10");
       if (res.ok) {
         const data = await res.json();
         setSeoData({ connected: true, data });
@@ -669,28 +670,28 @@ function SEOTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Clicks"
-          value={seoData.data?.totals.clicks.toLocaleString() || "0"}
+          value={seoData.data?.aggregated.totalClicks.toLocaleString() || "0"}
           icon={TrendingUp}
           color="indigo"
-          subtitle="Last 28 days"
+          subtitle="Last 30 days"
         />
         <StatCard
           title="Impressions"
-          value={seoData.data?.totals.impressions.toLocaleString() || "0"}
+          value={seoData.data?.aggregated.totalImpressions.toLocaleString() || "0"}
           icon={Eye}
           color="weld"
           subtitle="Search appearances"
         />
         <StatCard
           title="Avg CTR"
-          value={`${((seoData.data?.totals.ctr || 0) * 100).toFixed(1)}%`}
+          value={`${((seoData.data?.aggregated.averageCtr || 0) * 100).toFixed(1)}%`}
           icon={TrendingUp}
           color="walnut"
           subtitle="Click-through rate"
         />
         <StatCard
           title="Avg Position"
-          value={(seoData.data?.totals.position || 0).toFixed(1)}
+          value={(seoData.data?.aggregated.averagePosition || 0).toFixed(1)}
           icon={Search}
           color="madder"
           subtitle="In search results"
