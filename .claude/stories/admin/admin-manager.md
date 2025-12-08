@@ -1,7 +1,7 @@
 # Story: Admin Manager
 
 **Epic:** See `.claude/epic.md`
-**Status:** not-started
+**Status:** complete
 **Priority:** P0
 **Created:** 2025-12-08
 **Updated:** 2025-12-08
@@ -10,12 +10,12 @@
 Make calvin.orr@gmail.com the administrator for the website to enable, allow, and manage users.
 
 ## Acceptance Criteria
-- [ ] calvin.orr@gmail.com is set as admin in database (`isAdmin: true`)
-- [ ] Admin can view all allowed emails in Settings page
-- [ ] Admin can add new emails to allowlist
-- [ ] Admin can remove emails from allowlist (with safety checks)
-- [ ] Non-admin users cannot access user management features
-- [ ] Admin actions are audit logged
+- [x] calvin.orr@gmail.com is set as admin in database (`isAdmin: true`)
+- [x] Admin can view all allowed emails in Settings page
+- [x] Admin can add new emails to allowlist
+- [x] Admin can remove emails from allowlist (with safety checks)
+- [x] Non-admin users cannot access user management features
+- [x] Admin actions are audit logged
 
 ## Implementation Notes
 
