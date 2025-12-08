@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { blogPosts, blogIdeas } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
+import { validateRequest, updateBlogPostSchema } from "@/lib/validations";
 
 // GET /api/blog/[id] - Get single blog post
 export async function GET(
@@ -45,30 +46,30 @@ export async function PUT(
   try {
     await requireAuth();
     const { id } = await params;
-    const body = await request.json();
-    const { title, content, excerpt, tags, status, scheduledAt } = body;
+    const { data, error } = await validateRequest(request, updateBlogPostSchema);
+    if (error) return error;
 
     const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
 
-    if (title !== undefined) {
-      updateData.title = title;
-      updateData.slug = title
+    if (data.title !== undefined) {
+      updateData.title = data.title;
+      updateData.slug = data.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
     }
-    if (content !== undefined) updateData.contentHtml = content;
-    if (excerpt !== undefined) updateData.metaDescription = excerpt;
-    if (tags !== undefined) {
+    if (data.content !== undefined) updateData.contentHtml = data.content;
+    if (data.excerpt !== undefined) updateData.metaDescription = data.excerpt;
+    if (data.tags !== undefined) {
       updateData.focusKeywords = JSON.stringify(
-        tags.split(",").map((t: string) => t.trim())
+        data.tags.split(",").map((t: string) => t.trim())
       );
     }
-    if (status !== undefined) updateData.status = status;
-    if (scheduledAt !== undefined) {
-      updateData.scheduledAt = scheduledAt ? new Date(scheduledAt * 1000) : null;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.scheduledAt !== undefined) {
+      updateData.scheduledAt = data.scheduledAt ? new Date(data.scheduledAt * 1000) : null;
     }
 
     await db.update(blogPosts).set(updateData).where(eq(blogPosts.id, id));

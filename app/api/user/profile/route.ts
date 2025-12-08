@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { requireAuth, getCurrentUser } from "@/lib/auth";
 import { eq } from "drizzle-orm";
+import { validateRequest, updateProfileSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -54,36 +55,14 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-
-    // Validate input
-    if (!body.name || typeof body.name !== "string") {
-      return NextResponse.json(
-        { error: "Name is required and must be a string" },
-        { status: 400 }
-      );
-    }
-
-    const name = body.name.trim();
-    if (name.length === 0) {
-      return NextResponse.json(
-        { error: "Name cannot be empty" },
-        { status: 400 }
-      );
-    }
-
-    if (name.length > 100) {
-      return NextResponse.json(
-        { error: "Name must be 100 characters or less" },
-        { status: 400 }
-      );
-    }
+    const { data, error } = await validateRequest(request, updateProfileSchema);
+    if (error) return error;
 
     // Update user's name
     await db
       .update(users)
       .set({
-        name,
+        name: data.name,
         updatedAt: new Date(),
       })
       .where(eq(users.id, user.id));

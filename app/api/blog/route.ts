@@ -4,6 +4,7 @@ import { blogPosts } from "@/lib/schema";
 import { eq, desc, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { requireAuth } from "@/lib/auth";
+import { validateRequest, createBlogPostSchema } from "@/lib/validations";
 
 // GET /api/blog - List all blog posts
 export async function GET() {
@@ -37,28 +38,24 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await requireAuth();
-    const body = await request.json();
-    const { title, content, excerpt, tags, status = "draft", scheduledAt } = body;
-
-    if (!title) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
+    const { data, error } = await validateRequest(request, createBlogPostSchema);
+    if (error) return error;
 
     const id = randomUUID();
-    const slug = title
+    const slug = data.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
     await db.insert(blogPosts).values({
       id,
-      title,
+      title: data.title,
       slug,
-      contentHtml: content,
-      metaDescription: excerpt || null,
-      focusKeywords: tags ? JSON.stringify(tags.split(",").map((t: string) => t.trim())) : null,
-      status: status as "draft" | "review" | "published",
-      scheduledAt: scheduledAt ? new Date(scheduledAt * 1000) : null,
+      contentHtml: data.content || "",
+      metaDescription: data.excerpt || null,
+      focusKeywords: data.tags ? JSON.stringify(data.tags.split(",").map((t: string) => t.trim())) : null,
+      status: data.status as "draft" | "review" | "published",
+      scheduledAt: data.scheduledAt ? new Date(data.scheduledAt * 1000) : null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

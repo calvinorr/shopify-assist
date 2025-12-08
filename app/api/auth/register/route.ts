@@ -1,25 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registerUser } from "@/lib/auth";
+import { validateRequest, registerSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { data, error } = await validateRequest(request, registerSchema);
+    if (error) return error;
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password required" },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 }
-      );
-    }
-
-    const user = await registerUser(email, password, name);
+    const user = await registerUser(data.email, data.password, data.name);
 
     return NextResponse.json({ success: true, user: { email: user?.email } });
   } catch (error) {

@@ -4,6 +4,7 @@ import { users } from "@/lib/schema";
 import { requireAuth } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { validateRequest, changePasswordSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,30 +17,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-
-    // Validate input
-    if (!body.currentPassword || typeof body.currentPassword !== "string") {
-      return NextResponse.json(
-        { error: "Current password is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!body.newPassword || typeof body.newPassword !== "string") {
-      return NextResponse.json(
-        { error: "New password is required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate new password strength
-    if (body.newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "New password must be at least 8 characters long" },
-        { status: 400 }
-      );
-    }
+    const { data, error } = await validateRequest(request, changePasswordSchema);
+    if (error) return error;
 
     // Fetch user's current password hash
     const [userRecord] = await db
@@ -64,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Verify current password
     const isValid = await bcrypt.compare(
-      body.currentPassword,
+      data.currentPassword,
       userRecord.passwordHash
     );
 
@@ -77,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Check if new password is same as current
     const isSamePassword = await bcrypt.compare(
-      body.newPassword,
+      data.newPassword,
       userRecord.passwordHash
     );
 
@@ -89,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash new password
-    const newPasswordHash = await bcrypt.hash(body.newPassword, 12);
+    const newPasswordHash = await bcrypt.hash(data.newPassword, 12);
 
     // Update password
     await db

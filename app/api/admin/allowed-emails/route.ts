@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users, allowedEmails } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { validateRequest, allowedEmailSchema } from "@/lib/validations";
 
 // Helper to check admin status
 async function requireAdmin() {
@@ -22,12 +23,6 @@ async function requireAdmin() {
   }
 
   return currentUser;
-}
-
-// Email validation helper
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
 }
 
 // GET /api/admin/allowed-emails - List all allowed emails
@@ -65,31 +60,14 @@ export async function POST(request: NextRequest) {
   try {
     const currentUser = await requireAdmin();
 
-    const body = await request.json();
-    const { email } = body;
-
-    if (!email || typeof email !== "string") {
-      return NextResponse.json(
-        { success: false, error: "Email is required" },
-        { status: 400 }
-      );
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-
-    // Validate email format
-    if (!isValidEmail(normalizedEmail)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
+    const { data, error } = await validateRequest(request, allowedEmailSchema);
+    if (error) return error;
 
     // Check if email already exists
     const [existing] = await db
       .select()
       .from(allowedEmails)
-      .where(eq(allowedEmails.email, normalizedEmail))
+      .where(eq(allowedEmails.email, data.email))
       .limit(1);
 
     if (existing) {
@@ -103,7 +81,7 @@ export async function POST(request: NextRequest) {
     const id = crypto.randomUUID();
     await db.insert(allowedEmails).values({
       id,
-      email: normalizedEmail,
+      email: data.email,
       addedBy: currentUser.id,
     });
 
