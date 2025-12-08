@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 
 // Users table for authentication
 export const users = sqliteTable("users", {
@@ -10,7 +10,9 @@ export const users = sqliteTable("users", {
   isAdmin: integer("is_admin", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  emailIdx: index("users_email_idx").on(table.email),
+}));
 
 // Allowed emails for registration (admin-controlled access)
 export const allowedEmails = sqliteTable("allowed_emails", {
@@ -18,7 +20,9 @@ export const allowedEmails = sqliteTable("allowed_emails", {
   email: text("email").unique().notNull(),
   addedBy: text("added_by"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  emailIdx: index("allowed_emails_email_idx").on(table.email),
+}));
 
 // Products synced from Shopify
 export const products = sqliteTable("products", {
@@ -35,7 +39,11 @@ export const products = sqliteTable("products", {
   currency: text("currency").default("GBP"), // Store currency (GBP for Herbarium)
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  shopifyIdIdx: index("products_shopify_id_idx").on(table.shopifyProductId),
+  colorIdx: index("products_color_idx").on(table.color),
+  inventoryIdx: index("products_inventory_idx").on(table.inventory),
+}));
 
 // Instagram posts (scheduled and published)
 export const instagramPosts = sqliteTable("instagram_posts", {
@@ -56,7 +64,10 @@ export const instagramPosts = sqliteTable("instagram_posts", {
   engagementRate: real("engagement_rate"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  userIdIdx: index("instagram_posts_user_id_idx").on(table.userId),
+  statusIdx: index("instagram_posts_status_idx").on(table.status),
+}));
 
 // Blog posts with full content
 export const blogPosts = sqliteTable("blog_posts", {
@@ -77,7 +88,11 @@ export const blogPosts = sqliteTable("blog_posts", {
   shopifyProductLinks: text("shopify_product_links"), // JSON array
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  userIdIdx: index("blog_posts_user_id_idx").on(table.userId),
+  statusIdx: index("blog_posts_status_idx").on(table.status),
+  createdAtIdx: index("blog_posts_created_at_idx").on(table.createdAt),
+}));
 
 // Daily analytics snapshots
 export const analytics = sqliteTable("analytics", {
@@ -109,7 +124,9 @@ export const aiSuggestions = sqliteTable("ai_suggestions", {
   reasoning: text("reasoning"),
   used: integer("used", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
+}, (table) => ({
+  typeIdx: index("ai_suggestions_type_idx").on(table.type),
+}));
 
 // Blog ideas (persisted AI-generated topic suggestions)
 export const blogIdeas = sqliteTable("blog_ideas", {
@@ -123,7 +140,9 @@ export const blogIdeas = sqliteTable("blog_ideas", {
   generatedAt: integer("generated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   usedAt: integer("used_at", { mode: "timestamp" }),
   createdPostId: text("created_post_id").references(() => blogPosts.id), // Links to blog post if used
-});
+}, (table) => ({
+  statusIdx: index("blog_ideas_status_idx").on(table.status),
+}));
 
 // Google OAuth tokens for Search Console integration
 export const googleTokens = sqliteTable("google_tokens", {
