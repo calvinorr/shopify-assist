@@ -7,10 +7,10 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
-import { SEOPanel } from "@/components/blog";
+import { SEOPanel, SuggestedKeywords } from "@/components/blog";
 import { useToast } from "@/components/ui/toast";
 import { useAutosaveOnChange } from "@/hooks/use-autosave";
-import { Save, ArrowLeft, Eye, Edit3, Copy, Sparkles, Loader2, Calendar, X } from "lucide-react";
+import { Save, ArrowLeft, Eye, Edit3, Copy, Sparkles, Loader2, Calendar, X, Info } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow, addDays, addWeeks, setHours, setMinutes, startOfWeek, isPast } from "date-fns";
 import DOMPurify from "dompurify";
@@ -42,12 +42,14 @@ function NewBlogPostContent() {
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [tags, setTags] = useState("");
+  const [focusKeyword, setFocusKeyword] = useState("");
 
-  // Pre-fill from query params (from dashboard idea cards)
+  // Pre-fill from query params (from dashboard idea cards or keyword suggestions)
   useEffect(() => {
     const ideaTitle = searchParams.get("title");
     const ideaDescription = searchParams.get("description");
     const ideaKeywords = searchParams.get("keywords");
+    const keyword = searchParams.get("keyword");
 
     if (ideaTitle) {
       setTitle(ideaTitle);
@@ -58,6 +60,9 @@ function NewBlogPostContent() {
     }
     if (ideaKeywords) {
       setTags(ideaKeywords);
+    }
+    if (keyword) {
+      setFocusKeyword(keyword);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [isSaving, setIsSaving] = useState(false);
@@ -153,6 +158,11 @@ function NewBlogPostContent() {
     setIsSaving(true);
 
     try {
+      // Combine focusKeyword and tags into a single comma-separated string
+      const allKeywords = [focusKeyword.trim(), ...tags.split(",").map(t => t.trim())]
+        .filter(k => k.length > 0)
+        .join(", ");
+
       // If we already have a post ID, update instead of create
       const response = postId
         ? await fetch(`/api/blog/${postId}`, {
@@ -162,7 +172,7 @@ function NewBlogPostContent() {
               title: title.trim(),
               content,
               excerpt: excerpt.trim() || undefined,
-              tags: tags.trim() || undefined,
+              tags: allKeywords || undefined,
               status: "draft",
               scheduledAt: scheduledAt ? Math.floor(scheduledAt.getTime() / 1000) : undefined,
             }),
@@ -174,7 +184,7 @@ function NewBlogPostContent() {
               title: title.trim(),
               content,
               excerpt: excerpt.trim() || undefined,
-              tags: tags.trim() || undefined,
+              tags: allKeywords || undefined,
               status: "draft",
               scheduledAt: scheduledAt ? Math.floor(scheduledAt.getTime() / 1000) : undefined,
             }),
@@ -227,7 +237,7 @@ function NewBlogPostContent() {
 
   // Auto-save functionality
   const { status: autosaveStatus } = useAutosaveOnChange({
-    values: [title, content, excerpt, tags, scheduledAt?.toISOString() ?? ""],
+    values: [title, content, excerpt, tags, focusKeyword, scheduledAt?.toISOString() ?? ""],
     onSave: async () => {
       await handleSave(true);
     },
@@ -323,6 +333,35 @@ function NewBlogPostContent() {
         </div>
       </Header>
 
+      {/* Keyword Banner - shown when arriving from keyword suggestion */}
+      {focusKeyword && searchParams.get("keyword") && (
+        <div
+          className="mx-4 mt-4 p-3 rounded-lg flex items-center gap-3"
+          style={{
+            backgroundColor: "var(--indigo-light)",
+            border: "1px solid var(--indigo)",
+          }}
+        >
+          <Info size={18} style={{ color: "var(--indigo)" }} />
+          <div className="flex-1">
+            <p className="text-sm font-medium" style={{ color: "var(--indigo)" }}>
+              Writing about: <span className="font-bold">{focusKeyword}</span>
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--indigo)" }}>
+              This keyword has search potential based on Google Search Console data
+            </p>
+          </div>
+          <button
+            onClick={() => setFocusKeyword("")}
+            className="p-1 rounded hover:bg-white/50 transition-colors"
+            style={{ color: "var(--indigo)" }}
+            aria-label="Dismiss banner"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="p-4 h-[calc(100vh-80px)] flex gap-4">
         {/* Main Editor - Left Side */}
         <Card className="flex-1 flex flex-col overflow-hidden">
@@ -377,7 +416,7 @@ function NewBlogPostContent() {
         </Card>
 
         {/* Sidebar - Right Side */}
-        <Card className="w-72 flex-shrink-0">
+        <Card className="w-72 flex-shrink-0 overflow-y-auto">
           <CardContent className="p-4 space-y-4">
             {/* Schedule */}
             <div>
@@ -537,6 +576,38 @@ function NewBlogPostContent() {
               </div>
             </div>
 
+            {/* Focus Keyword */}
+            <div>
+              <label
+                htmlFor="focusKeyword"
+                className="text-xs font-medium mb-1 block"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Focus Keyword
+              </label>
+              <input
+                id="focusKeyword"
+                type="text"
+                value={focusKeyword}
+                onChange={(e) => setFocusKeyword(e.target.value)}
+                placeholder="Primary SEO keyword..."
+                className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all"
+                style={{
+                  borderColor: "var(--card-border)",
+                  backgroundColor: "var(--background)",
+                  color: "var(--text-primary)",
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                Main keyword to optimize this post for
+              </p>
+            </div>
+
+            {/* Suggested Keywords Panel */}
+            <SuggestedKeywords
+              onSelectKeyword={(keyword) => setFocusKeyword(keyword)}
+            />
+
             {/* Tags */}
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -589,7 +660,7 @@ function NewBlogPostContent() {
             <SEOPanel
               title={title}
               metaDescription={excerpt}
-              focusKeyword={tags.split(",")[0]?.trim() || ""}
+              focusKeyword={focusKeyword}
               contentHtml={editor?.getHTML() || ""}
             />
           </CardContent>

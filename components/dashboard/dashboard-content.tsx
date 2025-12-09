@@ -10,6 +10,7 @@ import { IdeaCard } from "./idea-card";
 import { HeaderStats } from "./header-stats";
 import { useToast } from "@/components/ui/toast";
 import { BlogPerformanceCard } from "@/components/blog";
+import { ContentOpportunities } from "./ContentOpportunities";
 
 interface BlogIdea {
   title: string;
@@ -307,6 +308,11 @@ export function DashboardContent() {
             isGenerating={isRefreshing}
           />
         )}
+      </section>
+
+      {/* Content Opportunities Section */}
+      <section>
+        <ContentOpportunities />
       </section>
 
       {/* Top Performing Posts Section */}
