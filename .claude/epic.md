@@ -58,13 +58,13 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 | Instagram Performance Analytics | P2 | not-started | `stories/instagram-analytics.md` |
 | Seasonal Pattern Recognition | P3 | not-started | `stories/seasonal-patterns.md` |
 
-### Phase 8: SEO & Content Intelligence - NEW
+### Phase 8: SEO & Content Intelligence - IN PROGRESS
 
 **Epic:** `epics/seo-content-intelligence.md`
 
 | Story | Priority | Status | File |
 |-------|----------|--------|------|
-| Blog Performance Tracking | P0 | not-started | `stories/seo/blog-performance-tracking.md` |
+| Blog Performance Tracking | P0 | complete | `stories/seo/blog-performance-tracking.md` |
 | Search Query Opportunities | P1 | not-started | `stories/seo/search-query-opportunities.md` |
 | AI Content Suggestions from GSC | P1 | not-started | `stories/seo/ai-content-suggestions.md` |
 | Content-to-Traffic Attribution | P2 | not-started | `stories/seo/content-traffic-attribution.md` |
