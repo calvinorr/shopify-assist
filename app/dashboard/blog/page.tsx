@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { IdeasPanel } from "@/components/blog/ideas-panel";
 import { ContentCalendar } from "@/components/blog/content-calendar";
 import {
@@ -19,7 +20,10 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  X
+  X,
+  TrendingUp,
+  TrendingDown,
+  Eye
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,6 +41,12 @@ interface BlogPost {
   scheduledAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+interface PerformanceData {
+  clicks: number;
+  impressions: number;
+  trend?: number; // Percentage change from previous period
 }
 
 type StatusFilter = "all" | "draft" | "review" | "published" | "scheduled" | "needs_attention";
@@ -60,8 +70,13 @@ export default function BlogPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
+  // Performance data state
+  const [performanceData, setPerformanceData] = useState<Map<string, PerformanceData>>(new Map());
+  const [performanceLoading, setPerformanceLoading] = useState(false);
+
   useEffect(() => {
     fetchPosts();
+    fetchPerformanceData();
   }, []);
 
   const fetchPosts = async () => {
@@ -77,6 +92,31 @@ export default function BlogPage() {
       showToast("Failed to load posts", "error");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPerformanceData = async () => {
+    setPerformanceLoading(true);
+    try {
+      const response = await fetch("/api/analytics/blog-performance?compareWithPrevious=true");
+      const data = await response.json();
+
+      if (response.ok && data.posts) {
+        const perfMap = new Map<string, PerformanceData>();
+        data.posts.forEach((post: any) => {
+          perfMap.set(post.slug, {
+            clicks: post.clicks || 0,
+            impressions: post.impressions || 0,
+            trend: post.change?.clicks
+          });
+        });
+        setPerformanceData(perfMap);
+      }
+    } catch (error) {
+      console.error("Failed to fetch performance data:", error);
+      // Silently fail - performance data is supplementary
+    } finally {
+      setPerformanceLoading(false);
     }
   };
 
@@ -234,6 +274,13 @@ export default function BlogPage() {
     if (score < 50) return "var(--danger)";
     if (score < 75) return "var(--warning)";
     return "var(--success)";
+  };
+
+  // Get performance level based on clicks
+  const getPerformanceLevel = (clicks: number): { label: string; variant: "success" | "warning" | "muted" } => {
+    if (clicks >= 100) return { label: "High", variant: "success" };
+    if (clicks >= 20) return { label: "Med", variant: "warning" };
+    return { label: "Low", variant: "muted" };
   };
 
   // Filter and sort posts
@@ -607,6 +654,8 @@ export default function BlogPage() {
                   {filteredAndSortedPosts.map((post) => {
                     const seoScore = calculateSEOScore(post);
                     const scheduledCountdown = getScheduledCountdown(post.scheduledAt);
+                    const perfData = performanceData.get(post.slug);
+                    const perfLevel = perfData ? getPerformanceLevel(perfData.clicks) : null;
 
                     return (
                       <div
@@ -675,6 +724,27 @@ export default function BlogPage() {
                               )}
                               SEO {seoScore}
                             </div>
+
+                            {/* Performance Badge */}
+                            {perfData && post.status === "published" && (
+                              <Badge
+                                variant={perfLevel?.variant || "muted"}
+                                className="gap-1"
+                                title={`${perfData.clicks} clicks, ${perfData.impressions} impressions`}
+                              >
+                                <Eye size={12} />
+                                {perfData.clicks}
+                                {perfData.trend !== undefined && Math.abs(perfData.trend) > 5 && (
+                                  <>
+                                    {perfData.trend > 0 ? (
+                                      <TrendingUp size={10} className="ml-0.5" />
+                                    ) : (
+                                      <TrendingDown size={10} className="ml-0.5" />
+                                    )}
+                                  </>
+                                )}
+                              </Badge>
+                            )}
                           </div>
 
                           {post.metaDescription && (

@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw, Sparkles, FileText, Instagram } from "lucide-react";
+import { RefreshCw, Sparkles, FileText, Instagram, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Header } from "@/components/layout/header";
 import { IdeaCard } from "./idea-card";
 import { HeaderStats } from "./header-stats";
 import { useToast } from "@/components/ui/toast";
+import { BlogPerformanceCard } from "@/components/blog";
 
 interface BlogIdea {
   title: string;
@@ -32,13 +33,27 @@ interface BlogPost {
   publishedAt?: string | null;
 }
 
+interface TopPerformingPost {
+  id: string;
+  title: string;
+  slug: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  trend?: number;
+}
+
 export function DashboardContent() {
   const router = useRouter();
   const { showToast } = useToast();
   const [blogIdeas, setBlogIdeas] = useState<BlogIdea[]>([]);
   const [instagramIdeas, setInstagramIdeas] = useState<InstagramIdea[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [topPerformingPosts, setTopPerformingPosts] = useState<TopPerformingPost[]>([]);
+  const [isGscConnected, setIsGscConnected] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPerformance, setIsLoadingPerformance] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startingBlogIndex, setStartingBlogIndex] = useState<number | null>(null);
 
@@ -76,9 +91,38 @@ export function DashboardContent() {
     }
   }, [showToast]);
 
+  const fetchPerformanceData = useCallback(async () => {
+    try {
+      setIsLoadingPerformance(true);
+      const response = await fetch("/api/analytics/blog-performance");
+
+      if (response.status === 403) {
+        // GSC not connected
+        setIsGscConnected(false);
+        setTopPerformingPosts([]);
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsGscConnected(true);
+        setTopPerformingPosts(data.topPerformers || []);
+      } else {
+        console.error("Failed to fetch performance data");
+        setIsGscConnected(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch performance data:", error);
+      setIsGscConnected(false);
+    } finally {
+      setIsLoadingPerformance(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    fetchPerformanceData();
+  }, [fetchData, fetchPerformanceData]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -265,6 +309,78 @@ export function DashboardContent() {
         )}
       </section>
 
+      {/* Top Performing Posts Section */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="rounded-lg p-2"
+            style={{ backgroundColor: "var(--weld-light)" }}
+          >
+            <TrendingUp className="w-5 h-5" style={{ color: "var(--weld)" }} />
+          </div>
+          <h2
+            className="text-xl font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Top Performing Content
+          </h2>
+        </div>
+
+        {isLoadingPerformance ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl p-6" style={{ backgroundColor: "var(--card)", border: "1px solid var(--card-border)" }}>
+                <Skeleton className="h-6 w-3/4 mb-3" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : isGscConnected === false ? (
+          <div
+            className="rounded-xl p-6 text-center"
+            style={{
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--card-border)",
+            }}
+          >
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              Connect Google Search Console in{" "}
+              <button
+                onClick={() => router.push("/dashboard/settings")}
+                className="text-sm font-medium underline"
+                style={{ color: "var(--weld)" }}
+              >
+                Settings
+              </button>{" "}
+              to see your top performing blog posts
+            </p>
+          </div>
+        ) : topPerformingPosts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {topPerformingPosts.map((post) => (
+              <BlogPerformanceCard
+                key={post.id}
+                post={post}
+                onClick={() => router.push(`/dashboard/blog/${post.id}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            className="rounded-xl p-6 text-center"
+            style={{
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--card-border)",
+            }}
+          >
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              No performance data available yet. Publish some blog posts to see insights here.
+            </p>
+          </div>
+        )}
+      </section>
+
       {/* Instagram Ideas Section */}
       <section>
         <div className="flex items-center gap-3 mb-4">
@@ -347,6 +463,96 @@ const SkeletonCard = memo(function SkeletonCard() {
         className="h-10 rounded-lg"
         style={{ backgroundColor: "var(--background)" }}
       />
+    </div>
+  );
+});
+
+const PerformanceSkeletonCard = memo(function PerformanceSkeletonCard() {
+  return (
+    <div
+      className="rounded-xl p-4 animate-pulse"
+      style={{
+        backgroundColor: "var(--card)",
+        border: "1px solid var(--card-border)",
+      }}
+    >
+      {/* Header: Title & Badge */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div
+          className="h-4 rounded flex-1"
+          style={{ backgroundColor: "var(--background)", width: "70%" }}
+        />
+        <div
+          className="h-5 w-12 rounded"
+          style={{ backgroundColor: "var(--background)" }}
+        />
+      </div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-8 h-8 rounded-lg"
+            style={{ backgroundColor: "var(--background)" }}
+          />
+          <div className="flex-1 space-y-1">
+            <div
+              className="h-3 rounded"
+              style={{ backgroundColor: "var(--background)", width: "60%" }}
+            />
+            <div
+              className="h-4 rounded"
+              style={{ backgroundColor: "var(--background)", width: "40%" }}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-8 h-8 rounded-lg"
+            style={{ backgroundColor: "var(--background)" }}
+          />
+          <div className="flex-1 space-y-1">
+            <div
+              className="h-3 rounded"
+              style={{ backgroundColor: "var(--background)", width: "60%" }}
+            />
+            <div
+              className="h-4 rounded"
+              style={{ backgroundColor: "var(--background)", width: "40%" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* CTR & Position Row */}
+      <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: "var(--card-border)" }}>
+        <div className="flex items-center gap-3">
+          <div className="space-y-1">
+            <div
+              className="h-3 rounded"
+              style={{ backgroundColor: "var(--background)", width: "30px" }}
+            />
+            <div
+              className="h-4 rounded"
+              style={{ backgroundColor: "var(--background)", width: "40px" }}
+            />
+          </div>
+          <div
+            className="w-px h-8"
+            style={{ backgroundColor: "var(--card-border)" }}
+          />
+          <div className="space-y-1">
+            <div
+              className="h-3 rounded"
+              style={{ backgroundColor: "var(--background)", width: "60px" }}
+            />
+            <div
+              className="h-4 rounded"
+              style={{ backgroundColor: "var(--background)", width: "30px" }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 });
