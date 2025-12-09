@@ -12,6 +12,7 @@ import {
   BarChart3,
   Search,
   Link,
+  Lightbulb,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -577,10 +578,23 @@ interface SEOData {
   };
 }
 
+interface Opportunity {
+  query: string;
+  category: "color" | "how-to" | "product" | "general";
+  impressions: number;
+  position: number;
+  ctr: number;
+  score: number;
+}
+
 function SEOTab() {
   const [seoData, setSeoData] = useState<SEOData | null>(null);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [opportunitiesLoading, setOpportunitiesLoading] = useState(false);
+  const [opportunityFilter, setOpportunityFilter] = useState<"all" | "high-impressions" | "low-ctr" | "poor-position">("all");
+  const [opportunitySort, setOpportunitySort] = useState<{ field: keyof Opportunity; direction: "asc" | "desc" }>({ field: "score", direction: "desc" });
 
   useEffect(() => {
     checkConnection();
@@ -595,6 +609,7 @@ function SEOTab() {
 
         if (data.connected) {
           fetchSEOData();
+          fetchOpportunities();
         }
       }
     } catch (error) {
@@ -617,10 +632,49 @@ function SEOTab() {
     }
   }
 
+  async function fetchOpportunities() {
+    setOpportunitiesLoading(true);
+    try {
+      const res = await fetch("/api/analytics/seo/opportunities");
+      if (res.ok) {
+        const data = await res.json();
+        setOpportunities(data.opportunities || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch opportunities:", error);
+    } finally {
+      setOpportunitiesLoading(false);
+    }
+  }
+
   function handleConnect() {
     setConnecting(true);
     window.location.href = "/api/analytics/seo/connect";
   }
+
+  function handleSort(field: keyof Opportunity) {
+    setOpportunitySort(prev => ({
+      field,
+      direction: prev.field === field && prev.direction === "asc" ? "desc" : "asc"
+    }));
+  }
+
+  // Filter opportunities based on active filter
+  const filteredOpportunities = opportunities.filter(opp => {
+    if (opportunityFilter === "all") return true;
+    if (opportunityFilter === "high-impressions") return opp.impressions > 100;
+    if (opportunityFilter === "low-ctr") return opp.ctr < 0.05;
+    if (opportunityFilter === "poor-position") return opp.position > 10;
+    return true;
+  });
+
+  // Sort opportunities
+  const sortedOpportunities = [...filteredOpportunities].sort((a, b) => {
+    const aVal = a[opportunitySort.field];
+    const bVal = b[opportunitySort.field];
+    const multiplier = opportunitySort.direction === "asc" ? 1 : -1;
+    return (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) * multiplier;
+  });
 
   if (loading) {
     return (
@@ -769,6 +823,180 @@ function SEOTab() {
           <div className="text-center py-8">
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               No search data available yet
+            </p>
+          </div>
+        )}
+      </Card>
+
+      {/* Content Opportunities Section */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div
+              className="rounded-lg p-2"
+              style={{ backgroundColor: "var(--weld-light)" }}
+            >
+              <Lightbulb className="w-5 h-5" style={{ color: "var(--weld)" }} />
+            </div>
+            <div>
+              <h2
+                className="text-lg font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Content Opportunities
+              </h2>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                Queries where you could rank higher
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setOpportunityFilter("all")}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
+            style={{
+              backgroundColor: opportunityFilter === "all" ? "var(--indigo-light)" : "var(--background)",
+              color: opportunityFilter === "all" ? "var(--indigo)" : "var(--text-muted)",
+            }}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setOpportunityFilter("high-impressions")}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
+            style={{
+              backgroundColor: opportunityFilter === "high-impressions" ? "var(--indigo-light)" : "var(--background)",
+              color: opportunityFilter === "high-impressions" ? "var(--indigo)" : "var(--text-muted)",
+            }}
+          >
+            High Impressions
+          </button>
+          <button
+            onClick={() => setOpportunityFilter("low-ctr")}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
+            style={{
+              backgroundColor: opportunityFilter === "low-ctr" ? "var(--indigo-light)" : "var(--background)",
+              color: opportunityFilter === "low-ctr" ? "var(--indigo)" : "var(--text-muted)",
+            }}
+          >
+            Low CTR
+          </button>
+          <button
+            onClick={() => setOpportunityFilter("poor-position")}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
+            style={{
+              backgroundColor: opportunityFilter === "poor-position" ? "var(--indigo-light)" : "var(--background)",
+              color: opportunityFilter === "poor-position" ? "var(--indigo)" : "var(--text-muted)",
+            }}
+          >
+            Poor Position
+          </button>
+        </div>
+
+        {/* Opportunities Table */}
+        {opportunitiesLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : sortedOpportunities.length > 0 ? (
+          <div className="divide-y" style={{ borderColor: "var(--card-border)" }}>
+            <div
+              className="grid grid-cols-12 gap-4 py-2 text-xs font-medium"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <div className="col-span-3 cursor-pointer" onClick={() => handleSort("query")}>
+                Query {opportunitySort.field === "query" && (opportunitySort.direction === "asc" ? "↑" : "↓")}
+              </div>
+              <div className="col-span-1 cursor-pointer" onClick={() => handleSort("category")}>
+                Category
+              </div>
+              <div className="col-span-2 text-right cursor-pointer" onClick={() => handleSort("impressions")}>
+                Impressions {opportunitySort.field === "impressions" && (opportunitySort.direction === "asc" ? "↑" : "↓")}
+              </div>
+              <div className="col-span-1 text-right cursor-pointer" onClick={() => handleSort("position")}>
+                Position {opportunitySort.field === "position" && (opportunitySort.direction === "asc" ? "↑" : "↓")}
+              </div>
+              <div className="col-span-1 text-right cursor-pointer" onClick={() => handleSort("ctr")}>
+                CTR {opportunitySort.field === "ctr" && (opportunitySort.direction === "asc" ? "↑" : "↓")}
+              </div>
+              <div className="col-span-2 text-right cursor-pointer" onClick={() => handleSort("score")}>
+                Score {opportunitySort.field === "score" && (opportunitySort.direction === "asc" ? "↑" : "↓")}
+              </div>
+              <div className="col-span-2 text-right">Action</div>
+            </div>
+            {sortedOpportunities.map((opp, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-12 gap-4 py-3 items-center"
+              >
+                <div
+                  className="col-span-3 text-sm truncate"
+                  style={{ color: "var(--text-primary)" }}
+                  title={opp.query}
+                >
+                  {opp.query}
+                </div>
+                <div className="col-span-1">
+                  <Badge
+                    variant={
+                      opp.category === "color" ? "warning" :
+                      opp.category === "how-to" ? "indigo" :
+                      opp.category === "product" ? "success" :
+                      "default"
+                    }
+                  >
+                    {opp.category}
+                  </Badge>
+                </div>
+                <div
+                  className="col-span-2 text-right text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {opp.impressions.toLocaleString()}
+                </div>
+                <div
+                  className="col-span-1 text-right text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {opp.position.toFixed(1)}
+                </div>
+                <div
+                  className="col-span-1 text-right text-sm"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {(opp.ctr * 100).toFixed(1)}%
+                </div>
+                <div
+                  className="col-span-2 text-right text-sm font-semibold"
+                  style={{ color: "var(--indigo)" }}
+                >
+                  {opp.score.toFixed(0)}
+                </div>
+                <div className="col-span-2 text-right">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      window.location.href = `/dashboard/blog/new?keyword=${encodeURIComponent(opp.query)}`;
+                    }}
+                  >
+                    Write Post
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              {opportunityFilter !== "all"
+                ? "No opportunities match this filter"
+                : "No content opportunities available yet"}
             </p>
           </div>
         )}

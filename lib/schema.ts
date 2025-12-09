@@ -155,3 +155,24 @@ export const googleTokens = sqliteTable("google_tokens", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
+
+// AI content recommendations cache (SEO opportunities)
+export const aiRecommendations = sqliteTable("ai_recommendations", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").references(() => users.id),
+  type: text("type").$type<"new_post" | "optimize" | "quick_win" | "long_tail">().notNull(),
+  title: text("title").notNull(),
+  targetKeyword: text("target_keyword").notNull(),
+  suggestedTitle: text("suggested_title"),
+  explanation: text("explanation").notNull(),
+  estimatedOpportunity: integer("estimated_opportunity").notNull(),
+  confidence: text("confidence").$type<"high" | "medium" | "low">().notNull(),
+  priority: text("priority").$type<"high" | "medium" | "low">().notNull(),
+  relatedQueries: text("related_queries"), // JSON array
+  existingPostId: text("existing_post_id").references(() => blogPosts.id),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+}, (table) => ({
+  userIdIdx: index("ai_recommendations_user_id_idx").on(table.userId),
+  expiresAtIdx: index("ai_recommendations_expires_at_idx").on(table.expiresAt),
+}));

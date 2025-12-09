@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TiptapEditor } from "@/components/editor/tiptap-editor";
-import { SEOPanel } from "@/components/blog";
+import { SEOPanel, SuggestedKeywords } from "@/components/blog";
 import { useToast } from "@/components/ui/toast";
 import { useAutosaveOnChange } from "@/hooks/use-autosave";
 import { Save, ArrowLeft, Trash2, Loader2, Eye, Edit3, Copy, Sparkles, Calendar, X } from "lucide-react";
@@ -38,6 +38,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [tags, setTags] = useState("");
+  const [focusKeyword, setFocusKeyword] = useState("");
   const [status, setStatus] = useState<"draft" | "review" | "published">("draft");
 
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +145,9 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
       setTitle(data.title);
       setContent(data.contentHtml || "");
       setExcerpt(data.metaDescription || "");
-      setTags(Array.isArray(data.focusKeywords) ? data.focusKeywords.join(", ") : "");
+      const keywords = Array.isArray(data.focusKeywords) ? data.focusKeywords : [];
+      setFocusKeyword(keywords[0] || "");
+      setTags(keywords.slice(1).join(", "));
       setStatus(data.status);
       setScheduledAt(data.scheduledAt ? new Date(data.scheduledAt * 1000) : null);
     } catch {
@@ -166,6 +169,11 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
     setIsSaving(true);
 
     try {
+      // Combine focusKeyword and tags into a single comma-separated string
+      const allKeywords = [focusKeyword.trim(), ...tags.split(",").map(t => t.trim())]
+        .filter(k => k.length > 0)
+        .join(", ");
+
       const response = await fetch(`/api/blog/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -173,7 +181,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
           title: title.trim(),
           content,
           excerpt: excerpt.trim() || undefined,
-          tags: tags.trim() || undefined,
+          tags: allKeywords || undefined,
           status,
           scheduledAt: scheduledAt ? Math.floor(scheduledAt.getTime() / 1000) : undefined,
         }),
@@ -220,7 +228,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
 
   // Auto-save functionality
   const { status: autosaveStatus } = useAutosaveOnChange({
-    values: [title, content, excerpt, tags, status, scheduledAt?.toISOString() ?? ""],
+    values: [title, content, excerpt, tags, focusKeyword, status, scheduledAt?.toISOString() ?? ""],
     onSave: async () => {
       await handleSave(true);
     },
@@ -422,7 +430,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
         </Card>
 
         {/* Sidebar - Right Side */}
-        <Card className="w-72 flex-shrink-0">
+        <Card className="w-72 flex-shrink-0 overflow-y-auto">
           <CardContent className="p-4 space-y-4">
             {/* Status */}
             <div>
@@ -608,6 +616,38 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
+            {/* Focus Keyword */}
+            <div>
+              <label
+                htmlFor="focusKeyword"
+                className="text-xs font-medium mb-1 block"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Focus Keyword
+              </label>
+              <input
+                id="focusKeyword"
+                type="text"
+                value={focusKeyword}
+                onChange={(e) => setFocusKeyword(e.target.value)}
+                placeholder="Primary SEO keyword..."
+                className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 transition-all"
+                style={{
+                  borderColor: "var(--card-border)",
+                  backgroundColor: "var(--background)",
+                  color: "var(--text-primary)",
+                }}
+              />
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                Main keyword to optimize this post for
+              </p>
+            </div>
+
+            {/* Suggested Keywords Panel */}
+            <SuggestedKeywords
+              onSelectKeyword={(keyword) => setFocusKeyword(keyword)}
+            />
+
             {/* Tags */}
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -660,7 +700,7 @@ export default function EditBlogPostPage({ params }: { params: Promise<{ id: str
             <SEOPanel
               title={title}
               metaDescription={excerpt}
-              focusKeyword={tags.split(",")[0]?.trim() || ""}
+              focusKeyword={focusKeyword}
               contentHtml={editor?.getHTML() || ""}
             />
           </CardContent>
