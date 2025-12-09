@@ -243,3 +243,67 @@ Include # symbol. 5-7 hashtags per category.`;
 
   return { brand: [], product: [], community: [], trending: [] };
 }
+
+/**
+ * Generate AI-enhanced content recommendations
+ */
+export async function generateAIContentRecommendations(
+  opportunities: Array<{
+    query: string;
+    impressions: number;
+    position: number;
+    type: string;
+  }>
+): Promise<
+  Array<{
+    title: string;
+    reasoning: string;
+  }>
+> {
+  if (opportunities.length === 0) {
+    return [];
+  }
+
+  const systemInstruction = `You are a content strategist for Herbarium Dyeworks, an artisan hand-dyed wool business.
+Create compelling content recommendations based on search data that will engage the audience and improve SEO performance.`;
+
+  const prompt = `Based on these search queries and their performance, suggest content titles and reasoning:
+
+${opportunities
+  .map(
+    (opp, i) =>
+      `${i + 1}. Query: "${opp.query}"
+   - Impressions: ${opp.impressions}/month
+   - Current position: ${opp.position.toFixed(1)}
+   - Type: ${opp.type}`
+  )
+  .join("\n\n")}
+
+For each query, provide:
+- A compelling blog post title that would rank well
+- Brief reasoning (1-2 sentences) explaining why this content would perform well
+
+Format as JSON array:
+[{"title": "", "reasoning": ""}]`;
+
+  const response = await generateContent({
+    prompt,
+    systemInstruction,
+    maxTokens: 1000,
+  });
+
+  try {
+    const jsonMatch = response.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch {
+    // Fallback to basic recommendations
+    return opportunities.map((opp) => ({
+      title: `Guide to ${opp.query}`,
+      reasoning: `This query has ${opp.impressions} monthly impressions. Creating targeted content could improve rankings.`,
+    }));
+  }
+
+  return [];
+}

@@ -66,7 +66,7 @@ A fully integrated content automation tool connecting Shopify → Instagram → 
 |-------|----------|--------|------|
 | Blog Performance Tracking | P0 | complete | `stories/seo/blog-performance-tracking.md` |
 | Search Query Opportunities | P1 | complete | `stories/seo/search-query-opportunities.md` |
-| AI Content Suggestions from GSC | P1 | not-started | `stories/seo/ai-content-suggestions.md` |
+| AI Content Suggestions from GSC | P1 | complete | `stories/seo/ai-content-suggestions.md` |
 | Content-to-Traffic Attribution | P2 | not-started | `stories/seo/content-traffic-attribution.md` |
 | Keyword Gap Analysis | P2 | not-started | `stories/seo/keyword-gap-analysis.md` |
 

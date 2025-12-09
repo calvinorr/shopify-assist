@@ -11,6 +11,7 @@ import { HeaderStats } from "./header-stats";
 import { useToast } from "@/components/ui/toast";
 import { BlogPerformanceCard } from "@/components/blog";
 import { ContentOpportunities } from "./ContentOpportunities";
+import { AIInsights } from "./AIInsights";
 
 interface BlogIdea {
   title: string;
@@ -247,6 +248,11 @@ export function DashboardContent() {
         className="p-6 space-y-8 max-w-6xl mx-auto"
         style={{ backgroundColor: "var(--background)" }}
       >
+        {/* AI Insights Section */}
+        <section>
+          <AIInsights />
+        </section>
+
         {/* Blog Ideas Section */}
       <section>
         <div className="flex items-center justify-between mb-4">
